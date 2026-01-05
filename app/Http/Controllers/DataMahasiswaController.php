@@ -133,7 +133,7 @@ class DataMahasiswaController extends Controller
         try {
             $file = $request->file('file');
             $spreadsheet = IOFactory::load($file);
-            $worksheet = $spreadsheet->getActiveSheet();
+            $worksheet = $spreadsheet->getSheetByName('Data Mahasiswa') ?? $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
 
             // Get headers from first row
@@ -172,15 +172,24 @@ class DataMahasiswaController extends Controller
                 $angkatan = $getValue(['angkatan', 'ANGKATAN', 'year', 'batch', 'tahun angkatan']);
 
                 // Validate required fields
-                if (empty($nim)) {
-                    throw new \Exception("Row " . ($rowIndex + 2) . ": Missing required fields (NIM)");
-                }
                 if (empty($nama)) {
-                    throw new \Exception("Row " . ($rowIndex + 2) . ": Missing required fields (Nama)");
+                    Log::warning("Skip row " . ($rowIndex + 2) . ": Missing required fields (nama_mahasiswa)");
+                    continue;
                 }
-                if (!in_array($status, $validStatuses)) {
-                    throw new \Exception("Row " . ($rowIndex + 2) . ": Invalid status '{$status}'. Valid statuses: " . implode(', ', $validStatuses));
+
+                if (DataMahasiswa::where('nama', $nama)->exists()) {
+                    Log::warning("Skip row " . ($rowIndex + 2) . ": Nama Mahasiswa '$nama' already exists");
+                    continue;
                 }
+
+                // // Validate required fields
+                // if (empty($nim)) {
+                //     throw new \Exception("Row " . ($rowIndex + 2) . ": Missing required fields (NIM)");
+                // }
+
+                // if (!in_array($status, $validStatuses)) {
+                //     throw new \Exception("Row " . ($rowIndex + 2) . ": Invalid status '{$status}'. Valid statuses: " . implode(', ', $validStatuses));
+                // }
 
                 // Check if already exists
                 $existing = DataMahasiswa::withTrashed()->where('nim', $nim)->first();

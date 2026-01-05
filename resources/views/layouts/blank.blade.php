@@ -16,9 +16,11 @@
     <link href="https://fonts.bunny.net/css?family=Nunito" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ asset('css/auth.css') }}">
+    <link href="/css/styles2.css" rel="stylesheet">
 
     <!-- Font Awesome icons (free version)-->
     <script src="https://use.fontawesome.com/releases/v6.1.0/js/all.js" crossorigin="anonymous"></script>
+
 </head>
 <body>
     <div>

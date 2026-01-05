@@ -101,20 +101,6 @@
                                 </ul>
                             </div>
                         </li>
-                        <li class="nav-item">
-                            <div class="dropdown">
-                                <button class="nav-link btn dropdown-toggle" type="button" data-bs-toggle="dropdown"
-                                    aria-expanded="false">
-                                    Start-up
-                                </button>
-                                <ul class="dropdown-menu">
-                                    <li><a class="dropdown-item" href="">Program
-                                            Start-up</a></li>
-                                    <li><a class="dropdown-item" href="">Data
-                                            Start-up</a></li>
-                                </ul>
-                            </div>
-                        </li>
 
                         @guest
                             @if (Route::has('login'))

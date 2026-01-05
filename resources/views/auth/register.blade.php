@@ -1,7 +1,7 @@
 @extends('layouts.blank')
 
 @section('content')
-    <div class="container position-absolute top-50 start-50 translate-middle">
+    <div class="container">
         <div class="row justify-content-center">
             <div class="col-md-8">
                 <div class="card text-center">
@@ -222,7 +222,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('togglePassword').addEventListener('click', function() {
         const passwordInput = document.getElementById('password');
         const toggleIcon = document.getElementById('togglePasswordIcon');
-        
+
         if (passwordInput.type === 'password') {
             passwordInput.type = 'text';
             toggleIcon.classList.remove('fa-eye');
@@ -238,7 +238,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('togglePasswordConfirm').addEventListener('click', function() {
         const passwordConfirmInput = document.getElementById('password-confirm');
         const toggleConfirmIcon = document.getElementById('togglePasswordConfirmIcon');
-        
+
         if (passwordConfirmInput.type === 'password') {
             passwordConfirmInput.type = 'text';
             toggleConfirmIcon.classList.remove('fa-eye');

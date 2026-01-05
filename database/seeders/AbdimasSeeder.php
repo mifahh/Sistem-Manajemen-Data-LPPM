@@ -10,14 +10,8 @@ class AbdimasSeeder extends Seeder
 {
     public function run(): void
     {
-        // Buat reader khusus XLSX
-        $reader = IOFactory::createReader('Xlsx');
-
-        // Aktifkan mode read-only (hanya ambil value, abaikan style/format)
-        $reader->setReadDataOnly(true);
-
         // Load file Excel
-        $spreadsheet = $reader->load(storage_path('app/private/file_import/DATA MASTER.xlsx'));
+        $spreadsheet = IOFactory::load(storage_path('app/private/file_import/DATA MASTER.xlsx'));
         $worksheet = $spreadsheet->getSheetByName('PKM MASTER DATA');
         $rows = $worksheet->toArray();
 

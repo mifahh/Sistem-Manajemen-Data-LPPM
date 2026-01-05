@@ -145,7 +145,7 @@ class DataDosenController extends Controller
         try {
             $file = $request->file('file');
             $spreadsheet = IOFactory::load($file);
-            $worksheet = $spreadsheet->getActiveSheet();
+            $worksheet = $spreadsheet->getSheetByName('Data Dosen All') ?? $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
 
             // Get headers from first row
@@ -174,11 +174,12 @@ class DataDosenController extends Controller
                     }
                     return null;
                 };
+
                 $status_raw = strtolower(trim((string) $getValue(['Status Aktif', 'status', 'aktif', 'active'])));
 
                 // Extract data from row with multiple header naming support
                 $nama_dosen = $getValue(['nama_dosen', 'NAMA', 'dosen name', 'name']);
-                $status_aktif = !in_array($status_raw, ['non-aktif', '0', '0.0', 'false']);
+                $status_aktif = !in_array($status_raw, ['aktif-nocount', 'non-aktif', '0', '0.0', 'false']);
                 $prodi = $getValue(['PRODI', 'program studi', 'jurusan', 'department']);
                 $nip = $getValue(['nip', 'NIP YPT', 'employee id']);
                 $nidn = $getValue(['NIDN', 'nidn dosen', 'lecturer id']);
@@ -188,11 +189,22 @@ class DataDosenController extends Controller
 
                 // Validate required fields
                 if (empty($nama_dosen)) {
-                    throw new \Exception("Row " . ($rowIndex + 2) . ": Missing required fields (nama_dosen)");
+                    Log::warning("Skip row " . ($rowIndex + 2) . ": Missing required fields (nama_dosen)");
+                    continue;
                 }
 
+                if (DataDosen::where('nama_dosen', $nama_dosen)->exists()) {
+                    Log::warning("Skip row " . ($rowIndex + 2) . ": Nama Dosen '$nama_dosen' already exists");
+                    continue;
+                }
+
+                //cek aktif-nocount
+                // if (trim((string) $getValue(['Status Aktif', 'status', 'aktif', 'active'])) === 'Aktif-NoCount') {
+                //     throw new \Exception("Row " . ($rowIndex + 2) . $nama_dosen. trim((string) $getValue(['Status Aktif', 'status', 'aktif', 'active'])). $status_aktif);
+                // }
+
                 // Check if already exists
-                $existing = DataDosen::withTrashed()->where('nidn', $nidn)->first();
+                $existing = DataDosen::withTrashed()->where('nip', $nip)->first();
 
                 if ($existing && is_null($existing->deleted_at)) {
                     // Update existing
