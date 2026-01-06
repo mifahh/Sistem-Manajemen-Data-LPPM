@@ -95,7 +95,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('data_penelitian_table', ['tahun' => 2018]) }}" class="nav-link">
+                            <a href="{{ route('data_penelitian_table') }}" class="nav-link">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Penelitian</p>
                             </a>
@@ -123,7 +123,7 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a href="{{ route('data_abdimas_table', ['tahun' => 2018]) }}" class="nav-link">
+                            <a href="{{ route('data_abdimas_table') }}" class="nav-link">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Abdimas</p>
                             </a>
@@ -150,13 +150,13 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('data_ki_table', ['tahun' => 2018]) }}">
+                            <a class="nav-link" href="{{ route('data_ki_table') }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Kekayaan Intelektual</p>
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('data_publikasi_table', ['tahun' => 2018, 'akreditasi_index_jurnal' => '-']) }}">
+                            <a class="nav-link" href="{{ route('data_publikasi_table') }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Publikasi</p>
                             </a>

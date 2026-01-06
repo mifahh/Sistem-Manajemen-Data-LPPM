@@ -38,9 +38,11 @@ class PenelitianController extends Controller
             ->whereNull('deleted_at');
 
         // Add filter only if tahun parameter provided
-        if ($request->has('tahun_filter') && $request->tahun_filter != '') {
-            $query->where('tahun_pelaksanaan', $request->tahun_filter);
-        }
+        $query->when(
+            $request->filled('tahun_filter') && $request->tahun_filter !== '',
+            fn ($q) => $q->where('tahun_pelaksanaan', $request->tahun_filter),
+            fn ($q) => $q->where('tahun_pelaksanaan', Penelitian::max('tahun_pelaksanaan'))
+        );
 
         $penelitian = $query->get();
         $tahun_filter = Penelitian::select('tahun_pelaksanaan')->distinct()->orderBy('tahun_pelaksanaan', 'desc')->pluck('tahun_pelaksanaan');

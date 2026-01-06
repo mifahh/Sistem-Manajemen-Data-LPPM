@@ -32,11 +32,14 @@ class AbdimasController extends Controller
             ->whereNull('deleted_at');
 
         // Add filter only if tahun parameter provided
-        if ($request->has('tahun') && $request->tahun != '') {
-            $query->where('tahun_pelaksanaan', $request->tahun);
-        }
+        $query->when(
+            $request->filled('tahun_filter') && $request->tahun_filter !== '',
+            fn ($q) => $q->where('tahun_pelaksanaan', $request->tahun_filter),
+            fn ($q) => $q->where('tahun_pelaksanaan', Abdimas::max('tahun_pelaksanaan'))
+        );
 
         $abdimas = $query->get();
+        $tahun_filter = Abdimas::select('tahun_pelaksanaan')->distinct()->orderBy('tahun_pelaksanaan', 'desc')->pluck('tahun_pelaksanaan');
         $tahun = \App\Models\MasterTahun::all();
         $jurusan = \App\Models\MasterJurusan::all();
         $jml_abdimas = $abdimas->count();
@@ -48,6 +51,7 @@ class AbdimasController extends Controller
         return view('abdimas.data_abdimas_table', [
             'abdimas' => $transformedData,
             'jurusan' => $jurusan,
+            'tahun_filter' => $tahun_filter,
             'tahun' => $tahun,
             'jml_abdimas' => $jml_abdimas
         ]);

@@ -56,7 +56,7 @@
                                         name="name" value="{{ old('name') }}" required autocomplete="name"
                                         placeholder="Enter Name">
 
-                                    @error('nama')
+                                    @error('name')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
                                         </span>
@@ -128,7 +128,7 @@
                                         class="form-control @error('number') is-invalid @enderror" name="no_hp"
                                         required autocomplete="tel" pattern="[0-9]+" value="{{ old('no_hp') }}" placeholder="Enter No. HP : 0852303603xx">
 
-                                    @error('number')
+                                    @error('no_hp')
                                         <span class="invalid-feedback" role="alert">
                                             <strong>{{ $message }}</strong>
                                         </span>
@@ -136,7 +136,7 @@
                                 </div>
                             </div>
 
-                            <div class="mb-3 row">
+                            {{-- <div class="mb-3 row">
                                 <label class="col-md-4 col-form-label text-md-end">
                                     {{ __('Pilih Role') }}
                                 </label>
@@ -150,9 +150,9 @@
                                         <label class="form-check-label" for="role_admin">Admin</label>
                                     </div>
                                 </div>
-                            </div>
+                            </div> --}}
 
-
+{{--
                             <div class="row mb-3">
                                 <label for="keyword"
                                     class="col-md-4 col-form-label text-md-end">{{ __('Keyword Admin') }}</label>
@@ -169,7 +169,7 @@
                                     @enderror
                                     <h7 style="color: red"> * Keyword Hanya Diperoleh Oleh Admin LPPM ITTS </h7>
                                 </div>
-                            </div>
+                            </div> --}}
 
 
                             <div class="row mb-3">
@@ -198,25 +198,25 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const keywordInput = document.getElementById('keyword');
-    const roleRadios = document.querySelectorAll('input[name="role"]');
+    // const keywordInput = document.getElementById('keyword');
+    // const roleRadios = document.querySelectorAll('input[name="role"]');
 
-    function toggleKeyword() {
-        const selectedRole = document.querySelector('input[name="role"]:checked');
-        if (selectedRole && selectedRole.id === 'role_non_admin') {
-            keywordInput.disabled = true;
-            keywordInput.value = ''; // optional: clear input
-        } else {
-            keywordInput.disabled = false;
-        }
-    }
+    // function toggleKeyword() {
+    //     const selectedRole = document.querySelector('input[name="role"]:checked');
+    //     if (selectedRole && selectedRole.id === 'role_non_admin') {
+    //         keywordInput.disabled = true;
+    //         keywordInput.value = ''; // optional: clear input
+    //     } else {
+    //         keywordInput.disabled = false;
+    //     }
+    // }
 
-    roleRadios.forEach(radio => {
-        radio.addEventListener('change', toggleKeyword);
-    });
+    // roleRadios.forEach(radio => {
+    //     radio.addEventListener('change', toggleKeyword);
+    // });
 
-    // Initial check on page load
-    toggleKeyword();
+    // // Initial check on page load
+    // toggleKeyword();
 
     // Toggle Password Visibility
     document.getElementById('togglePassword').addEventListener('click', function() {

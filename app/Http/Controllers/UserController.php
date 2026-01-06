@@ -1,6 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
+
+use App\Models\DataDosen;
+use App\Models\DataStaff;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +24,8 @@ class UserController extends Controller
     public function post_daftarakun(Request $request)
     {
         $id_login = $request->id;
+        $isStaff = DataStaff::where('nip', $id_login)->exists();
+        $isDosen = DataDosen::where('nip', $id_login)->exists();
 
         $messages = [
             'required' => ':attribute wajib diisi, tidak boleh kosong',
@@ -36,8 +41,6 @@ class UserController extends Controller
             'email' => 'required|string|min:4|email:dns|unique:users',
             'password' => 'required|string|confirmed|min:6',
             'no_hp' => 'required|numeric|regex:/^08[0-9]{8,12}$/',
-            'role' => 'required|string|max:50',
-            'keyword' => 'nullable|string|max:255',
         ], $messages);
 
         try{
@@ -46,25 +49,20 @@ class UserController extends Controller
             $user->name = $request->name;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
-            $user->nomor_hp = $request->no_hp;
+            $user->no_hp = $request->no_hp;
 
-            if ($request->keyword == 'Admin@LPPM_2025' && $request->role == '1') {
-                $user->role = $request->role;
-                $user->key = $request->keyword;
-            } else {
-                $user->role = $request->role;
+            if ($isStaff) {
+                $user->aktor_id = '1';
+            } else if($isDosen){
+                $user->aktor_id = '2';
             }
 
             $user->save();
 
-            // Kirim email verifikasi
-            $user->sendEmailVerificationNotification();
+            // // Kirim email verifikasi
+            // $user->sendEmailVerificationNotification();
 
-            if ($request->keyword == 'Admin@LPPM_2025' && $request->role == '1') {
-                return redirect(route('menulogin'))->with('alert-success', 'Registrasi berhasil! Silakan cek email Anda untuk memverifikasi akun Admin Anda.');
-            } else {
-                return redirect(route('menulogin'))->with('alert-success', 'Registrasi berhasil! Silakan cek email Anda untuk memverifikasi akun Anda.');
-            }
+            return redirect(route('menulogin'))->with('alert-success', 'Registrasi berhasil! Silakan login akun Anda.');
         }catch(\Exception $e){
             return redirect(route('daftarakun'))->with('alert-danger', 'Registrasi gagal: ' . $e->getMessage());
         }

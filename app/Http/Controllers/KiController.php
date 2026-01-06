@@ -18,11 +18,14 @@ class KiController extends Controller
     {
         $query = KI::with('anggota')->whereNull('deleted_at');
 
-        if ($request->has('tahun') && $request->tahun != '') {
-            $query->where('application_year', $request->tahun);
-        }
+        $query->when(
+            $request->filled('tahun_filter') && $request->tahun_filter !== '',
+            fn ($q) => $q->where('application_year', $request->tahun_filter),
+            fn ($q) => $q->where('application_year', KI::max('application_year'))
+        );
 
         $data_ki = $query->get();
+        $tahun_filter = KI::select('application_year')->distinct()->orderBy('application_year', 'desc')->pluck('application_year');
         $tahun = \App\Models\MasterTahun::all();
         $jurusan = \App\Models\MasterJurusan::all();
         $kategori = \App\Models\MasterKategoriKI::all();
@@ -34,6 +37,7 @@ class KiController extends Controller
 
         return view('ki.data_ki_table', [
             'ki' => $transformedData,
+            'tahun_filter' => $tahun_filter,
             'tahun' => $tahun,
             'jurusan' => $jurusan,
             'kategori' => $kategori,

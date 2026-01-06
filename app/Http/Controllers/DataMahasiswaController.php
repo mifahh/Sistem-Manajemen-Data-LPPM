@@ -18,17 +18,44 @@ class DataMahasiswaController extends Controller
     public function data_mahasiswa_table(Request $request)
     {
         $query = DataMahasiswa::whereNull('deleted_at');
+        $selected_status = ($request->has('status') && $request->status != '') ? $request->status : 'STUDENT';
+        $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : DataMahasiswa::max('angkatan');
+        $selected_prodi = ($request->has('prodi') && $request->prodi != '') ? $request->prodi : DataMahasiswa::select('prodi')->distinct()->pluck('prodi')->first();
+        // dd("Filters - Status: {$selected_status}, Tahun: {$selected_tahun}, Prodi: {$selected_prodi}");
 
-        if ($request->has('status') && $request->status != '') {
-            $query->where('status', $request->status);
-        }
+        $query->when(
+            $request->filled('status') && $request->status !== '',
+            fn ($q) => $q->where('status', $request->status),
+            fn ($q) => $q->where('status', 'STUDENT')
+        );
+
+        $query->when(
+            $request->filled('tahun_filter') && $request->tahun_filter !== '',
+            fn ($q) => $q->where('angkatan', $request->tahun_filter),
+            fn ($q) => $q->where('angkatan', DataMahasiswa::max('angkatan'))
+        );
+
+        $query->when(
+            $request->filled('prodi') && $request->prodi !== '',
+            fn ($q) => $q->where('prodi', $request->prodi),
+            fn ($q) => $q->where('prodi', DataMahasiswa::select('prodi')->distinct()->pluck('prodi')->first())
+        );
 
         $data_mahasiswa = $query->orderBy('nim', 'asc')->get();
+        $tahun_filter = DataMahasiswa::select('angkatan')->distinct()->orderBy('angkatan', 'desc')->pluck('angkatan');
+        $tahun = \App\Models\MasterTahun::all();
+        $jurusan = \App\Models\MasterJurusan::all();
         $statuses = DataMahasiswa::getStatusList();
 
         return view('data_mahasiswa.data_mahasiswa_table', [
             'data_mahasiswa' => $data_mahasiswa,
             'jml_mahasiswa' => $data_mahasiswa->count(),
+            'selected_status' => $selected_status,
+            'selected_tahun' => $selected_tahun,
+            'selected_prodi' => $selected_prodi,
+            'tahun_filter' => $tahun_filter,
+            'tahun' => $tahun,
+            'jurusan' => $jurusan,
             'statuses' => $statuses,
         ]);
     }

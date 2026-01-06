@@ -8,7 +8,7 @@ use App\Models\User;
 
 class AccountSeeder extends Seeder
 {
-    public function run()   
+    public function run()
     {
         // Create default admin account if not exists
         $email = 'admin@example.com';
@@ -22,7 +22,6 @@ class AccountSeeder extends Seeder
                 'password' => bcrypt('admin123'), // bcrypt
                 'no_hp' => '08123456789',
                 'aktor_id' => '1',
-                'keyword' => 'Admin@LPPM_2025',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);

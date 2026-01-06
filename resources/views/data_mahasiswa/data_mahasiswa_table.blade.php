@@ -65,10 +65,25 @@
                                             <label for="status">Status</label>
                                             <select name="status" id="status" class="form-select"
                                                 onchange="this.form.submit()">
-                                                <option value="">Semua Status</option>
                                                 @foreach ($statuses as $s)
-                                                    <option value="{{ $s }}" {{ (request('status') == $s) ? 'selected' : '' }}>
+                                                    <option value="{{ $s }}" {{ ($selected_status ?? request('status')) == $s ? 'selected' : '' }}>
                                                         {{ $s }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-2">
+                                            <label for="tahun">Angkatan</label>
+                                            <select name="tahun_filter" id="tahun_filter" class="form-select" required onchange="this.form.submit()">
+                                                @foreach ($tahun_filter as $item)
+                                                    <option value="{{ $item }}" {{ ($selected_tahun ?? request('tahun_filter')) == $item ? 'selected' : '' }}>{{ $item }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <label for="prodi">Program Studi</label>
+                                            <select name="prodi" id="prodi" class="form-select" required onchange="this.form.submit()">
+                                                @foreach ($jurusan as $item)
+                                                    <option value="{{ $item->nama_jurusan }}" {{ ($selected_prodi ?? request('prodi')) == $item->nama_jurusan ? 'selected' : '' }}>{{ $item->nama_jurusan }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -147,7 +162,7 @@
             <div class="form-group row">
                 <label for="nim_create" class="col-sm-2 col-form-label d-flex align-items-center">NIM</label>
                 <div class="col-sm-10 d-flex align-items-center">
-                    <input type="text" class="form-control" id="nim_create" name="nim"
+                    <input type="number" class="form-control" id="nim_create" name="nim"
                         placeholder="Isikan NIM" required>
                 </div>
             </div>
@@ -163,8 +178,12 @@
             <div class="form-group row">
                 <label for="prodi_create" class="col-sm-2 col-form-label d-flex align-items-center">Prodi</label>
                 <div class="col-sm-10 d-flex align-items-center">
-                    <input type="text" class="form-control" id="prodi_create" name="prodi"
-                        placeholder="Isikan Program Studi" required>
+                    <select name="prodi" id="prodi_create" class="form-select" required>
+                        <option value="">Pilih Prodi</option>
+                        @foreach ($jurusan as $jrs)
+                            <option value="{{ $jrs->nama_jurusan }}">{{ $jrs->nama_jurusan }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
 
@@ -183,8 +202,12 @@
             <div class="form-group row">
                 <label for="angkatan_create" class="col-sm-2 col-form-label d-flex align-items-center">Angkatan</label>
                 <div class="col-sm-10 d-flex align-items-center">
-                    <input type="text" class="form-control" id="angkatan_create" name="angkatan"
-                        placeholder="Isikan Angkatan (misal: 2020)" required>
+                    <select name="angkatan" id="angkatan_create" class="form-select" required>
+                        <option value="">Pilih Angkatan</option>
+                        @foreach ($tahun as $t)
+                            <option value="{{ $t->tahun }}">{{ $t->tahun }}</option>
+                        @endforeach
+                    </select>
                 </div>
             </div>
         </div>
@@ -200,7 +223,7 @@
                 <div class="form-group row">
                     <label for="nim_edit{{ $item->id }}" class="col-sm-2 col-form-label d-flex align-items-center">NIM</label>
                     <div class="col-sm-10 d-flex align-items-center">
-                        <input type="text" class="form-control" id="nim_edit{{ $item->id }}" name="nim"
+                        <input type="number" class="form-control" id="nim_edit{{ $item->id }}" name="nim"
                             placeholder="Isikan NIM" value="{{ $item->nim }}" required>
                     </div>
                 </div>
@@ -216,8 +239,14 @@
                 <div class="form-group row">
                     <label for="prodi_edit{{ $item->id }}" class="col-sm-2 col-form-label d-flex align-items-center">Prodi</label>
                     <div class="col-sm-10 d-flex align-items-center">
-                        <input type="text" class="form-control" id="prodi_edit{{ $item->id }}" name="prodi"
-                            placeholder="Isikan Program Studi" value="{{ $item->prodi }}" required>
+                        <select name="prodi" id="prodi_edit{{ $item->id }}" class="form-select" required>
+                            @if(empty($item->prodi))
+                                <option value="">Pilih Prodi</option>
+                            @endif
+                            @foreach ($jurusan as $jrs)
+                                <option value="{{ $jrs->nama_jurusan }}" {{ $item->prodi == $jrs->nama_jurusan ? 'selected' : '' }}>{{ $jrs->nama_jurusan }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
@@ -235,8 +264,14 @@
                 <div class="form-group row">
                     <label for="angkatan_edit{{ $item->id }}" class="col-sm-2 col-form-label d-flex align-items-center">Angkatan</label>
                     <div class="col-sm-10 d-flex align-items-center">
-                        <input type="text" class="form-control" id="angkatan_edit{{ $item->id }}" name="angkatan"
-                            placeholder="Isikan Angkatan (misal: 2020)" value="{{ $item->angkatan }}" required>
+                        <select name="angkatan" id="angkatan_edit{{ $item->id }}" class="form-select" required>
+                            @if(empty($item->angkatan))
+                                <option value="">Pilih Angkatan</option>
+                            @endif
+                            @foreach ($tahun as $t)
+                                <option value="{{ $t->tahun }}" {{ $item->angkatan == $t->tahun ? 'selected' : '' }}>{{ $t->tahun }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
             </div>

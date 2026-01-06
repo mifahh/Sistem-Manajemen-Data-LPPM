@@ -34,6 +34,7 @@ class DatabaseSeeder extends Seeder
             MasterKategoriKISeeder::class,
             DataDosenSeeder::class,
             DataMahasiswaSeeder::class,
+            DataStaffSeeder::class,
         ]);
     }
 }

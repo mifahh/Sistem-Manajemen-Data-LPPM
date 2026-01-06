@@ -28,12 +28,17 @@ class PublikasiController extends Controller
     {
         $query = Publikasi::with('penulis')->whereNull('deleted_at');
 
-        if ($request->has('tahun_filter') && $request->tahun_filter != '') {
-            $query->where('tahun_published', $request->tahun_filter);
-        }
-        if ($request->has('akreditasi_index_jurnal') && $request->akreditasi_index_jurnal != '') {
-            $query->where('akreditasi_index_jurnal', $request->akreditasi_index_jurnal);
-        }
+        $query->when(
+            $request->filled('tahun_filter') && $request->tahun_filter !== '',
+            fn ($q) => $q->where('tahun_published', $request->tahun_filter),
+            fn ($q) => $q->where('tahun_published', Publikasi::max('tahun_published'))
+        );
+
+        $query->when(
+            $request->filled('akreditasi_index_jurnal') && $request->akreditasi_index_jurnal != '',
+            fn ($q) => $q->where('akreditasi_index_jurnal', $request->akreditasi_index_jurnal),
+            fn ($q) => $q->where('akreditasi_index_jurnal', '-')
+        );
 
         $data_publikasi = $query->get();
         $tahun_filter = Publikasi::select('tahun_published')->distinct()->orderBy('tahun_published', 'desc')->pluck('tahun_published');

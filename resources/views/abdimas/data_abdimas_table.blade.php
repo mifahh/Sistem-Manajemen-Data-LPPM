@@ -66,10 +66,9 @@
                                     <div class="row">
                                         <div class="form-group col-md-2">
                                             <label for="tahun">Tahun Pelaksanaan</label>
-                                            <select name="tahun" id="tahun" class="form-select" required
-                                                onchange="this.form.submit()">
-                                                @foreach ($tahun as $item)
-                                                    <option value="{{ $item->tahun }}" {{ (request('tahun') == $item->tahun) ? 'selected' : '' }}>{{ $item->tahun }}</option>
+                                            <select name="tahun_filter" id="tahun_filter" class="form-select" required onchange="this.form.submit()">
+                                                @foreach ($tahun_filter as $item)
+                                                    <option value="{{ $item }}" {{ (request('tahun_filter') == $item) ? 'selected' : '' }}>{{ $item }}</option>
                                                 @endforeach
                                             </select>
                                         </div>

@@ -18,7 +18,6 @@ return new class extends Migration
             $table->string('password');
             $table->string('no_hp');
             $table->string('aktor_id');
-            $table->string('keyword')->nullable();
             $table->timestamps();
         });
 
@@ -43,6 +42,6 @@ return new class extends Migration
     {
         Schema::dropIfExists('users');
         Schema::dropIfExists('sessions');
-        
+
     }
 };

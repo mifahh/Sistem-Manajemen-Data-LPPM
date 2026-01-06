@@ -172,7 +172,7 @@
             <div class="form-group row">
                 <label for="nip_create" class="col-sm-2 col-form-label d-flex align-items-center">NIP</label>
                 <div class="col-sm-2 d-flex align-items-center">
-                    <input type="text" class="form-control" id="nip_create" name="nip" placeholder="Isikan NIP" required>
+                    <input type="number" class="form-control" id="nip_create" name="nip" placeholder="Isikan NIP" required>
                     @error('nip')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -181,7 +181,7 @@
                 </div>
                 <label for="nidn_create" class="col-sm-1 col-form-label d-flex align-items-center">NIDN</label>
                 <div class="col-sm-3 d-flex align-items-center">
-                    <input type="text" class="form-control" id="nidn_create" name="nidn" placeholder="Isikan NIDN" required>
+                    <input type="number" class="form-control" id="nidn_create" name="nidn" placeholder="Isikan NIDN" required>
                     @error('nidn')
                         <span class="invalid-feedback" role="alert">
                             <strong>{{ $message }}</strong>
@@ -262,7 +262,7 @@
                 <div class="form-group row">
                     <label for="nip_edit{{ $item->id }}" class="col-sm-2 col-form-label d-flex align-items-center">NIP</label>
                     <div class="col-sm-2 d-flex align-items-center">
-                        <input type="text" class="form-control" id="nip_edit{{ $item->id }}" name="nip" placeholder="Isikan NIP"
+                        <input type="number" class="form-control" id="nip_edit{{ $item->id }}" name="nip" placeholder="Isikan NIP"
                             value="{{ $item->nip }}" required>
                         @error('nip')
                             <span class="invalid-feedback" role="alert">
@@ -272,7 +272,7 @@
                     </div>
                     <label for="nidn_edit{{ $item->id }}" class="col-sm-1 col-form-label d-flex align-items-center">NIDN</label>
                     <div class="col-sm-3 d-flex align-items-center">
-                        <input type="text" class="form-control" id="nidn_edit{{ $item->id }}" name="nidn"
+                        <input type="number" class="form-control" id="nidn_edit{{ $item->id }}" name="nidn"
                             placeholder="Isikan NIDN" value="{{ $item->nidn }}" required>
                         @error('nidn')
                             <span class="invalid-feedback" role="alert">
