@@ -55,6 +55,8 @@ class UserController extends Controller
                 $user->aktor_id = '1';
             } else if($isDosen){
                 $user->aktor_id = '2';
+            } else {
+                return redirect(route('daftarakun'))->with('alert-danger', 'Registrasi gagal: ID tidak terdaftar sebagai Staff atau Dosen.');
             }
 
             $user->save();
