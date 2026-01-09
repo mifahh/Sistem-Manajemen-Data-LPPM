@@ -319,7 +319,7 @@
                 <h5 class="font-weight-bold d-flex justify-content-center">Data Anggota</h5>
                 <div class="container">
                     <div class="row">
-                        @for ($i = 1; $i <= 10; $i++)
+                        @for ($i = 1; $i <= 12; $i++)
                             <div class="col-md-4 mb-4">
                                 <fieldset class="form-group border p-3 h-100">
                                     <legend class="w-auto px-2 font-weight-bold">Anggota {{ $i }}</legend>
@@ -501,7 +501,7 @@
                     <h5 class="font-weight-bold d-flex justify-content-center">Data Anggota</h5>
                     <div class="container">
                         <div class="row">
-                            @for ($i = 1; $i <= 10; $i++)
+                            @for ($i = 1; $i <= 12; $i++)
                                 <div class="col-md-4 mb-4">
                                     <fieldset class="form-group border p-3 h-100">
                                         <legend class="w-auto px-2 font-weight-bold">Anggota {{ $i }}</legend>

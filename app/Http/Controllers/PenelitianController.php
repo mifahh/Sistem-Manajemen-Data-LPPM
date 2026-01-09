@@ -153,12 +153,13 @@ class PenelitianController extends Controller
         DB::beginTransaction();
         try {
             // Create main penelitian record
-            $penelitian = Penelitian::create([
+            $penelitian = Penelitian::updateOrCreate([
+                'judul_penelitian' => $request->judul_penelitian,
+            ], [
                 'link_sk' => $request->link_sk,
                 'no_sk' => $request->no_sk,
                 'link_kontrak' => $request->link_kontrak,
                 'no_kontrak' => $request->no_kontrak,
-                'judul_penelitian' => $request->judul_penelitian,
                 'nama_skema' => $request->nama_skema,
                 'tahun_usulan' => $request->tahun_usulan,
                 'tahun_pelaksanaan' => $request->tahun_pelaksanaan,
@@ -179,10 +180,11 @@ class PenelitianController extends Controller
             // Create members
             for ($i = 1; $i <= 8; $i++) {
                 if (!empty($request->input('nama_member' . $i))) {
-                    PenelitianMember::create([
+                    PenelitianMember::updateOrCreate([
                         'id_penelitian' => $penelitian->id,
-                        'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
                         'nama_member' => $request->input('nama_member' . $i),
+                    ], [
+                        'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
                         'dana_member' => $request->input('dana_member' . $i) ?? 0,
                         'pt' => $request->input('pt' . $i),
                     ]);
@@ -190,8 +192,9 @@ class PenelitianController extends Controller
             }
 
             // Create additional fields
-            PenelitianAdditionalField::create([
+            PenelitianAdditionalField::updateOrCreate([
                 'id_penelitian' => $penelitian->id,
+            ], [
                 'sdg' => $request->sdg,
                 'proposal' => $request->proposal,
                 'laporan_akhir' => $request->laporan_akhir,
@@ -200,18 +203,20 @@ class PenelitianController extends Controller
             // Create mahasiswa records
             for ($i = 1; $i <= 8; $i++) {
                 if (!empty($request->input('nama_mhs' . $i))) {
-                    PenelitianMahasiswa::create([
+                    PenelitianMahasiswa::updateOrCreate([
                         'id_penelitian' => $penelitian->id,
-                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'nama_mhs' => $request->input('nama_mhs' . $i),
+                    ], [
+                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'prodi_mhs' => $request->input('prodi_mhs' . $i),
                     ]);
                 }
             }
 
             // Create luaran record
-            PenelitianLuaran::create([
+            PenelitianLuaran::updateOrCreate([
                 'id_penelitian' => $penelitian->id,
+            ], [
                 'luaran_wajib' => $request->luaran_wajib,
                 'capaian_luaran_wajib' => $request->capaian_luaran_wajib,
                 'luaran_tambahan' => $request->luaran_tambahan,
@@ -444,12 +449,13 @@ class PenelitianController extends Controller
                 $ptIndex = $findColumn(['PT', 'Institusi', 'pt']);
 
                 // Create main penelitian record
-                $penelitian = Penelitian::create([
+                $penelitian = Penelitian::updateOrCreate([
+                    'judul_penelitian' => $judul_penelitian,
+                ], [
                     'link_sk' => $getHyperlink($noSkIndex) ?? $getValue($headers, $row, $noSkIndex),
                     'no_sk' => $getValue($headers, $row, $noSkIndex),
                     'link_kontrak' => $getHyperlink($noKontrakIndex) ?? $getValue($headers, $row, $noKontrakIndex),
                     'no_kontrak' => $getValue($headers, $row, $noKontrakIndex),
-                    'judul_penelitian' => $judul_penelitian,
                     'nama_skema' => $getValue($headers, $row, $namaSkemaIndex),
                     'tahun_usulan' => parseInteger($getValue($headers, $row, $tahunUsuIndex)) ?? null,
                     'tahun_pelaksanaan' => parseInteger($getValue($headers, $row, $tahunPelIndex)) ?? null,
@@ -472,10 +478,11 @@ class PenelitianController extends Controller
                     $namaMemIndex = $findColumn(['Nama Member' . $i, 'Member' . $i, 'nama_member' . $i]);
                     $namaMem = $getValue($headers, $row, $namaMemIndex);
                     if (!empty($namaMem)) {
-                        PenelitianMember::create([
+                        PenelitianMember::updateOrCreate([
                             'id_penelitian' => $penelitian->id,
-                            'id_dosen' => $this->getIdDosenByNama($namaMem),
                             'nama_member' => $namaMem,
+                        ], [
+                            'id_dosen' => $this->getIdDosenByNama($namaMem),
                             'dana_member' => parseDana($getValue($headers, $row, $findColumn(['Dana Member' . $i, 'DANA MEMBER' . $i, 'dana_member' . $i]))) ?? 0,
                             'pt' => $getValue($headers, $row, $findColumn(['PT Member' . $i, 'PT' . $i, 'pt' . $i])),
                         ]);
@@ -483,8 +490,9 @@ class PenelitianController extends Controller
                 }
 
                 // Create additional fields
-                PenelitianAdditionalField::create([
+                PenelitianAdditionalField::updateOrCreate([
                     'id_penelitian' => $penelitian->id,
+                ], [
                     'sdg' => collect([
                         $getValue($headers, $row, $findColumn(['SDG Pertama', 'sdg pertama'])),
                         $getValue($headers, $row, $findColumn(['SDG Kedua', 'sdg kedua'])),
@@ -503,18 +511,20 @@ class PenelitianController extends Controller
                     $namaMhsIndex = $findColumn(['Nama Mhs' . $i, 'Nama Mahasiswa' . $i, 'Mahasiswa' . $i, 'nama_mhs' . $i]);
                     $namaMhs = $getValue($headers, $row, $namaMhsIndex);
                     if (!empty($namaMhs)) {
-                        PenelitianMahasiswa::create([
+                        PenelitianMahasiswa::updateOrCreate([
                             'id_penelitian' => $penelitian->id,
-                            'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
                             'nama_mhs' => $namaMhs,
+                        ], [
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
                             'prodi_mhs' => $getValue($headers, $row, $findColumn(['Prodi Mhs' . $i, 'Prodi Mahasiswa' . $i, 'Prodi' . $i, 'prodi_mhs' . $i])),
                         ]);
                     }
                 }
 
                 // Create luaran record
-                PenelitianLuaran::create([
+                PenelitianLuaran::updateOrCreate([
                     'id_penelitian' => $penelitian->id,
+                ], [
                     'luaran_wajib' => $getValue($headers, $row, $findColumn(['Luaran Wajib', 'luaran_wajib'])),
                     'capaian_luaran_wajib' => $getValue($headers, $row, $findColumn(['Capaian Luaran Wajib', 'capaian_luaran_wajib'])),
                     'luaran_tambahan' => $getValue($headers, $row, $findColumn(['Luaran Tambahan', 'luaran_tambahan'])),

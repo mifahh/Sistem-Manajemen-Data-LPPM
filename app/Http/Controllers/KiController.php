@@ -92,11 +92,12 @@ class KiController extends Controller
 
         DB::beginTransaction();
         try {
-            $dataKi = KI::create([
+            $dataKi = KI::updateOrCreate([
+                'title' => $request->title,
+            ], [
                 'application_number' => $request->application_number,
                 'kategori' => $request->kategori,
                 'application_year' => $request->application_year,
-                'title' => $request->title,
                 'jenis_hki' => $request->jenis_hki,
                 'prototype' => $request->prototype,
                 'patent_holder' => $request->patent_holder,
@@ -116,11 +117,12 @@ class KiController extends Controller
 
             for ($i = 1; $i <= 10; $i++) {
                 if (!empty($request->input("anggota_{$i}"))) {
-                    KIAnggota::create([
+                    KIAnggota::updateOrCreate([
                         'id_ki' => $dataKi->id,
+                        'anggota' => $request->input("anggota_{$i}"),
+                    ], [
                         'id_dosen' => $this->getIdDosenByNama($request->input("anggota_{$i}")),
                         'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input("anggota_{$i}")),
-                        'anggota' => $request->input("anggota_{$i}"),
                         'status_anggota' => $request->input("status_anggota_{$i}"),
                         'prodi' => $request->input("prodi_{$i}"),
                     ]);
@@ -262,11 +264,12 @@ class KiController extends Controller
                 }
 
                 // Create main KI data
-                $dataKi = KI::create([
+                $dataKi = KI::updateOrCreate([
+                    'title' => $rowData['TITLE'] ?? null,
+                ], [
                     'application_number' => $rowData['Application Number'] ?? null,
                     'kategori' => $rowData['Kategori'] ?? null,
                     'application_year' => $rowData['APPLICATION YEAR'] ?? null,
-                    'title' => $rowData['TITLE'] ?? null,
                     'jenis_hki' => $rowData['Jenis HKI'] ?? null,
                     'prototype' => $rowData['Prototipe'] ?? null,
                     'patent_holder' => $rowData['PATENT HOLDER'] ?? null,
@@ -287,11 +290,12 @@ class KiController extends Controller
                 // Create anggota data
                 for ($i = 1; $i <= 12; $i++) {
                     if (!empty($rowData['Anggota ' . $i] ?? null)) {
-                        KIAnggota::create([
+                        KIAnggota::updateOrCreate([
                             'id_ki' => $dataKi->id,
+                            'anggota' => $rowData['Anggota ' . $i] ?? null,
+                        ], [
                             'id_mahasiswa' => $this->getIdMahasiswaByNama($rowData['Anggota ' . $i] ?? null),
                             'id_dosen' => $this->getIdDosenByNama($rowData['Anggota ' . $i] ?? null),
-                            'anggota' => $rowData['Anggota ' . $i] ?? null,
                             'status_anggota' => $rowData['Status Anggota ' . $i] ?? null,
                         ]);
                     }

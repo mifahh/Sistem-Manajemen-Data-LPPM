@@ -68,7 +68,7 @@
                                             <label for="tahun_filter">Tahun Published</label>
                                             <select name="tahun_filter" id="tahun_filter" class="form-select" required onchange="this.form.submit()">
                                                 @foreach ($tahun_filter as $item)
-                                                    <option value="{{ $item }}" {{ (request('tahun_filter') == $item) ? 'selected' : '' }}>{{ $item }}</option>
+                                                    <option value="{{ $item }}" {{ ($selected_tahun == $item) ? 'selected' : '' }}>{{ $item }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -76,7 +76,7 @@
                                             <label for="akreditasi_index_jurnal">Akreditasi/Index Jurnal</label>
                                             <select name="akreditasi_index_jurnal" id="akreditasi_index_jurnal" class="form-select" required onchange="this.form.submit()">
                                                 @foreach ($akreditasi_index_jurnal as $item)
-                                                    <option value="{{ $item }}" {{ (request('akreditasi_index_jurnal') == $item) ? 'selected' : '' }}>{{ $item }}</option>
+                                                    <option value="{{ $item }}" {{ ($selected_akreditasi == $item) ? 'selected' : '' }}>{{ $item }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -115,15 +115,18 @@
                                             <td>{{ $item['prodi'] ?? '-' }}</td>
                                             <td>{{ $item['status'] ?? '-' }}</td>
                                             <td>{{ $item['afiliasi'] ?? '-' }}</td>
-                                            <td>{{ collect([
-                                                $item['penulis_1'] ?? null,
-                                                $item['penulis_2'] ?? null,
-                                                $item['penulis_3'] ?? null,
-                                                $item['penulis_4'] ?? null,
-                                                $item['penulis_5'] ?? null,
-                                                $item['penulis_6'] ?? null,
-                                                $item['penulis_lain'] ?? null
-                                            ])->filter()->join(', ') ?: '-' }}</td>
+                                            <td>
+                                                @php
+                                                    $penulis = [];
+                                                    for ($i = 1; $i <= 15; $i++) {
+                                                        if (!empty($item['penulis_' . $i])) {
+                                                            $penulis[] = $item['penulis_' . $i];
+                                                        }
+                                                    }
+                                                @endphp
+
+                                                {{ !empty($penulis) ? implode(', ', $penulis) : '-' }}
+                                            </td>
                                             @if($item['doi'] != null && filter_var($item['doi'], FILTER_VALIDATE_URL))
                                                 <td><a href="{{ $item['doi'] }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-pdf fs-2 d-flex justify-content-center"></i></a></td>
                                             @else
@@ -240,7 +243,7 @@
             <h5 class="font-weight-bold d-flex justify-content-center">Data Penulis</h5>
             <div class="container">
                 <div class="row">
-                    @for ($i = 1; $i <= 6; $i++)
+                    @for ($i = 1; $i <= 15; $i++)
                         <div class="col-md-4 mb-4">
                             <fieldset class="form-group border p-3 h-100">
                                 <legend class="w-auto px-2 font-weight-bold">Penulis {{ $i }}</legend>
@@ -270,7 +273,7 @@
                             </fieldset>
                         </div>
                     @endfor
-                    <div class="col-md-12 mb-4">
+                    {{-- <div class="col-md-12 mb-4">
                         <fieldset class="form-group border p-3 h-100">
                             <legend class="w-auto px-2 font-weight-bold">Penulis Lain</legend>
                             <div class="form-group mb-2">
@@ -286,7 +289,7 @@
                                 <textarea class="form-control" id="afiliasi_lain_create" name="afiliasi_lain" placeholder="Afiliasi" rows="2"></textarea>
                             </div>
                         </fieldset>
-                    </div>
+                    </div> --}}
                 </div>
             </div>
         </div>
@@ -384,7 +387,7 @@
                 <h5 class="font-weight-bold d-flex justify-content-center">Data Penulis</h5>
                 <div class="container">
                     <div class="row">
-                        @for ($i = 1; $i <= 6; $i++)
+                        @for ($i = 1; $i <= 15; $i++)
                             <div class="col-md-4 mb-4">
                                 <fieldset class="form-group border p-3 h-100">
                                     <legend class="w-auto px-2 font-weight-bold">Penulis {{ $i }}</legend>
@@ -420,7 +423,7 @@
                                 </fieldset>
                             </div>
                         @endfor
-                        <div class="col-md-12 mb-4">
+                        {{-- <div class="col-md-12 mb-4">
                             <fieldset class="form-group border p-3 h-100">
                                 <legend class="w-auto px-2 font-weight-bold">Penulis Lain</legend>
                                 <div class="form-group mb-2">
@@ -436,7 +439,7 @@
                                     <textarea class="form-control" id="afiliasi_lain_edit" name="afiliasi_lain" placeholder="Afiliasi" rows="2">{{ $item['afiliasi_lain'] ?? '' }}</textarea>
                                 </div>
                             </fieldset>
-                        </div>
+                        </div> --}}
                     </div>
                 </div>
             </div>

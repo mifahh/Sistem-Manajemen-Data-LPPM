@@ -25,20 +25,20 @@ class DataMahasiswaController extends Controller
 
         $query->when(
             $request->filled('status') && $request->status !== '',
-            fn ($q) => $q->where('status', $request->status),
-            fn ($q) => $q->where('status', 'STUDENT')
+            fn($q) => $q->where('status', $request->status),
+            fn($q) => $q->where('status', 'STUDENT')
         );
 
         $query->when(
             $request->filled('tahun_filter') && $request->tahun_filter !== '',
-            fn ($q) => $q->where('angkatan', $request->tahun_filter),
-            fn ($q) => $q->where('angkatan', DataMahasiswa::max('angkatan'))
+            fn($q) => $q->where('angkatan', $request->tahun_filter),
+            fn($q) => $q->where('angkatan', DataMahasiswa::max('angkatan'))
         );
 
         $query->when(
             $request->filled('prodi') && $request->prodi !== '',
-            fn ($q) => $q->where('prodi', $request->prodi),
-            fn ($q) => $q->where('prodi', DataMahasiswa::select('prodi')->distinct()->pluck('prodi')->first())
+            fn($q) => $q->where('prodi', $request->prodi),
+            fn($q) => $q->where('prodi', DataMahasiswa::select('prodi')->distinct()->pluck('prodi')->first())
         );
 
         $data_mahasiswa = $query->orderBy('nim', 'asc')->get();
@@ -170,14 +170,28 @@ class DataMahasiswaController extends Controller
             $worksheet = $spreadsheet->getSheetByName('Data Mahasiswa') ?? $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
 
-            // Get headers from first row
-            $headers = array_shift($rows);
+            // Ambil header dari file
+            $headers = array_map('strtolower', array_shift($rows));
 
             // Map headers to column indices
             $headerMap = [];
             foreach ($headers as $index => $header) {
                 $header = strtolower(trim($header));
                 $headerMap[$header] = $index;
+            }
+
+            // Daftar header wajib
+            $expectedHeaders = ['nim', 'nama', 'prodi', 'status', 'angkatan'];
+
+            // Validasi header
+            foreach ($expectedHeaders as $header) {
+                if (!in_array($header, $headers)) {
+                    DB::rollBack();
+                    return redirect()->back()->with(
+                        'error',
+                        "Template tidak sesuai. Header '$header' tidak ditemukan."
+                    );
+                }
             }
 
             $imported = 0;
@@ -206,24 +220,15 @@ class DataMahasiswaController extends Controller
                 $angkatan = $getValue(['angkatan', 'ANGKATAN', 'year', 'batch', 'tahun angkatan']);
 
                 // Validate required fields
+                if (empty($nim)) {
+                    throw new \Exception("Row " . ($rowIndex + 2) . ": Missing required fields (NIM)");
+                }
                 if (empty($nama)) {
-                    Log::warning("Skip row " . ($rowIndex + 2) . ": Missing required fields (nama_mahasiswa)");
-                    continue;
+                    throw new \Exception("Row " . ($rowIndex + 2) . ": Missing required fields (Nama)");
                 }
-
-                if (DataMahasiswa::where('nama', $nama)->exists()) {
-                    Log::warning("Skip row " . ($rowIndex + 2) . ": Nama Mahasiswa '$nama' already exists");
-                    continue;
+                if (!in_array($status, $validStatuses)) {
+                    throw new \Exception("Row " . ($rowIndex + 2) . ": Invalid status '{$status}'. Valid statuses: " . implode(', ', $validStatuses));
                 }
-
-                // // Validate required fields
-                // if (empty($nim)) {
-                //     throw new \Exception("Row " . ($rowIndex + 2) . ": Missing required fields (NIM)");
-                // }
-
-                // if (!in_array($status, $validStatuses)) {
-                //     throw new \Exception("Row " . ($rowIndex + 2) . ": Invalid status '{$status}'. Valid statuses: " . implode(', ', $validStatuses));
-                // }
 
                 // Check if already exists
                 $existing = DataMahasiswa::withTrashed()->where('nim', $nim)->first();
@@ -232,7 +237,7 @@ class DataMahasiswaController extends Controller
                     // Update existing
                     $existing->update([
                         'nim' => $nim,
-                        'nama' => $nama,
+                        'nama_mahasiswa' => $nama,
                         'prodi' => $prodi,
                         'status' => $status,
                         'angkatan' => $angkatan,
@@ -245,7 +250,7 @@ class DataMahasiswaController extends Controller
 
                     DataMahasiswa::create([
                         'nim' => $nim,
-                        'nama' => $nama,
+                        'nama_mahasiswa' => $nama,
                         'prodi' => $prodi,
                         'status' => $status,
                         'angkatan' => $angkatan,

@@ -32,7 +32,6 @@ class Publikasi extends Model
         return $this->hasMany(PublikasiPenulis::class, 'id_publikasi');
     }
 
-    protected $dates = ['deleted_at'];
     public function getCompleteData()
     {
         $data = [
@@ -49,14 +48,12 @@ class Publikasi extends Model
             'doi' => $this->doi,
         ];
 
-        // Loop penulis (maksimal 15)
-        for ($i = 1; $i <= 15; $i++) {
-            $penulis = $this->penulis[$i - 1] ?? null;
-
-            $data['penulis_' . $i]  = $penulis ? $penulis->nama_penulis : null;
-            $data['prodi_' . $i]    = $penulis ? $penulis->prodi : null;
-            $data['status_' . $i]   = $penulis ? $penulis->status : null;
-            $data['afiliasi_' . $i] = $penulis ? $penulis->afiliasi : null;
+        foreach ($this->penulis as $index => $penulis) {
+            $i = $index + 1;
+            $data['penulis_' . $i]  = $penulis->nama_penulis ?? null;
+            $data['prodi_' . $i]         = $penulis->prodi ?? null;
+            $data['status_' . $i]        = $penulis->status ?? null;
+            $data['afiliasi_' . $i]      = $penulis->afiliasi ?? null;
         }
 
         return $data;

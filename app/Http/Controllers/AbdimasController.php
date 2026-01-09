@@ -148,12 +148,13 @@ class AbdimasController extends Controller
         DB::beginTransaction();
         try {
             // Create main abdimas record
-            $abdimas = Abdimas::create([
+            $abdimas = Abdimas::updateOrCreate([
+                'judul_penelitian' => $request->judul_penelitian,
+            ], [
                 'link_sk' => $request->link_sk,
                 'no_sk' => $request->no_sk,
                 'link_kontrak' => $request->link_kontrak,
                 'no_kontrak' => $request->no_kontrak,
-                'judul_penelitian' => $request->judul_penelitian,
                 'nama_skema' => $request->nama_skema,
                 'tahun_usulan' => $request->tahun_usulan,
                 'tahun_pelaksanaan' => $request->tahun_pelaksanaan,
@@ -175,10 +176,11 @@ class AbdimasController extends Controller
             // Create members
             for ($i = 1; $i <= 8; $i++) {
                 if (!empty($request->input('nama_member' . $i))) {
-                    \App\Models\AbdimasMember::create([
+                    \App\Models\AbdimasMember::updateOrCreate([
                         'id_abdimas' => $abdimas->id,
-                        'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
                         'nama_member' => $request->input('nama_member' . $i),
+                    ], [
+                        'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
                         'dana_member' => $request->input('dana_member' . $i) ?? 0,
                         'pt' => $request->input('pt' . $i),
                     ]);
@@ -186,8 +188,9 @@ class AbdimasController extends Controller
             }
 
             // Create additional fields
-            \App\Models\AbdimasAdditionalField::create([
+            \App\Models\AbdimasAdditionalField::updateOrCreate([
                 'id_abdimas' => $abdimas->id,
+            ], [
                 'sdg' => $request->sdg,
                 'proposal' => $request->proposal,
                 'laporan_akhir' => $request->laporan_akhir,
@@ -196,18 +199,20 @@ class AbdimasController extends Controller
             // Create mahasiswa records
             for ($i = 1; $i <= 8; $i++) {
                 if (!empty($request->input('nama_mhs' . $i))) {
-                    \App\Models\AbdimasMahasiswa::create([
+                    \App\Models\AbdimasMahasiswa::updateOrCreate([
                         'id_abdimas' => $abdimas->id,
-                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'nama_mhs' => $request->input('nama_mhs' . $i),
+                    ], [
+                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'prodi_mhs' => $request->input('prodi_mhs' . $i),
                     ]);
                 }
             }
 
             // Create luaran record
-            \App\Models\AbdimasLuaran::create([
+            \App\Models\AbdimasLuaran::updateOrCreate([
                 'id_abdimas' => $abdimas->id,
+            ], [
                 'publikasi_ilmiah' => $request->publikasi_ilmiah,
                 'media_massa' => $request->media_massa,
                 'produk_jasa' => $request->produk_jasa,
@@ -448,12 +453,13 @@ class AbdimasController extends Controller
                 $ptIndex = $findColumn(['PT', 'Institusi', 'pt']);
 
                 // Create main abdimas record
-                $abdimas = Abdimas::create([
+                $abdimas = Abdimas::updateOrCreate([
+                    'judul_penelitian' => $judul_penelitian,
+                ], [
                     'link_sk' => $getHyperlink($noSkIndex) ?? $getValue($headers, $row, $noSkIndex),
                     'no_sk' => $getValue($headers, $row, $noSkIndex),
                     'link_kontrak' => $getHyperlink($noKontrakIndex) ?? $getValue($headers, $row, $noKontrakIndex),
                     'no_kontrak' => $getValue($headers, $row, $noKontrakIndex),
-                    'judul_penelitian' => $judul_penelitian,
                     'nama_skema' => $getValue($headers, $row, $namaSkemaIndex),
                     'tahun_usulan' => parseInteger($getValue($headers, $row, $tahunUsuIndex)) ?? null,
                     'tahun_pelaksanaan' => parseInteger($getValue($headers, $row, $tahunPelIndex)) ?? null,
@@ -477,10 +483,11 @@ class AbdimasController extends Controller
                     $namaMemIndex = $findColumn(['Nama Member' . $i, 'Member' . $i, 'nama_member' . $i]);
                     $namaMem = $getValue($headers, $row, $namaMemIndex);
                     if (!empty($namaMem)) {
-                        \App\Models\AbdimasMember::create([
+                        \App\Models\AbdimasMember::updateOrCreate([
                             'id_abdimas' => $abdimas->id,
-                            'id_dosen' => $this->getIdDosenByNama($namaMem),
                             'nama_member' => $namaMem,
+                        ], [
+                            'id_dosen' => $this->getIdDosenByNama($namaMem),
                             'dana_member' => parseDana($getValue($headers, $row, $findColumn(['Dana Member' . $i, 'DANA MEMBER' . $i, 'dana_member' . $i]))) ?? 0,
                             'pt' => $getValue($headers, $row, $findColumn(['PT Member' . $i, 'PT' . $i, 'pt' . $i])),
                         ]);
@@ -488,8 +495,9 @@ class AbdimasController extends Controller
                 }
 
                 // Create additional fields
-                \App\Models\AbdimasAdditionalField::create([
+                \App\Models\AbdimasAdditionalField::updateOrCreate([
                     'id_abdimas' => $abdimas->id,
+                ], [
                     'sdg' => $getValue($headers, $row, $findColumn(['SDG', 'sdg'])),
                     'proposal' => $getHyperlink($findColumn(['Proposal', 'proposal'])) ?? $getValue($headers, $row, $findColumn(['Proposal', 'proposal'])),
                     'laporan_akhir' => $getHyperlink($findColumn(['Laporan Akhir', 'Laporan_Akhir', 'laporan_akhir'])) ?? $getValue($headers, $row, $findColumn(['Laporan Akhir', 'laporan_akhir'])),
@@ -500,18 +508,20 @@ class AbdimasController extends Controller
                     $namaMhsIndex = $findColumn(['Nama Mhs' . $i, 'Nama Mahasiswa' . $i, 'Mahasiswa' . $i, 'nama_mhs' . $i]);
                     $namaMhs = $getValue($headers, $row, $namaMhsIndex);
                     if (!empty($namaMhs)) {
-                        \App\Models\AbdimasMahasiswa::create([
+                        \App\Models\AbdimasMahasiswa::updateOrCreate([
                             'id_abdimas' => $abdimas->id,
-                            'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
                             'nama_mhs' => $namaMhs,
+                        ], [
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
                             'prodi_mhs' => $getValue($headers, $row, $findColumn(['Prodi Mhs' . $i, 'Prodi Mahasiswa' . $i, 'Prodi' . $i, 'prodi_mhs' . $i])),
                         ]);
                     }
                 }
 
                 // Create luaran record
-                \App\Models\AbdimasLuaran::create([
+                \App\Models\AbdimasLuaran::updateOrCreate([
                     'id_abdimas' => $abdimas->id,
+                ], [
                     'publikasi_ilmiah' => $getValue($headers, $row, $findColumn(['Publikasi Ilmiah', 'publikasi_ilmiah'])),
                     'media_massa' => $getValue($headers, $row, $findColumn(['Media Massa', 'media_massa'])),
                     'produk_jasa' => $getValue($headers, $row, $findColumn(['Produk / Jasa', 'Produk Jasa', 'produk_jasa'])),

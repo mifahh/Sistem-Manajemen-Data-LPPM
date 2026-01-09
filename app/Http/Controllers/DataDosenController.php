@@ -156,13 +156,27 @@ class DataDosenController extends Controller
             $rows = $worksheet->toArray();
 
             // Get headers from first row
-            $headers = array_shift($rows);
+            $headers = array_map('strtolower', array_shift($rows));
 
             // Map headers to column indices
             $headerMap = [];
             foreach ($headers as $index => $header) {
                 $header = strtolower(trim($header));
                 $headerMap[$header] = $index;
+            }
+
+            // Daftar header wajib (minimal harus ada)
+            $expectedHeaders = [ 'nama', 'status aktif', 'prodi', 'nip ypt', 'nidn', 'coe', 'kk', 'kode dosen' ];
+
+            // Validasi header
+            foreach ($expectedHeaders as $header) {
+                if (!in_array($header, $headers)) {
+                    DB::rollBack();
+                    return redirect()->back()->with(
+                        'error',
+                        "Template tidak sesuai. Header '$header' tidak ditemukan."
+                    );
+                }
             }
 
             $imported = 0;
@@ -185,7 +199,7 @@ class DataDosenController extends Controller
                 $status_raw = strtolower(trim((string) $getValue(['Status Aktif', 'status', 'aktif', 'active'])));
 
                 // Extract data from row with multiple header naming support
-                $nama_dosen = $getValue(['nama_dosen', 'NAMA', 'dosen name', 'name']);
+                $nama_dosen = $getValue(['nama', 'NAMA', 'dosen name', 'name']);
                 $status_aktif = !in_array($status_raw, ['aktif-nocount', 'non-aktif', '0', '0.0', 'false']);
                 $prodi = $getValue(['PRODI', 'program studi', 'jurusan', 'department']);
                 $nip = $getValue(['nip', 'NIP YPT', 'employee id']);

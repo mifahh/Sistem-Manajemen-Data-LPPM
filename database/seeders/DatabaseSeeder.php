@@ -34,7 +34,6 @@ class DatabaseSeeder extends Seeder
             DataDosenSeeder::class,
             DataMahasiswaSeeder::class,
             DataStaffSeeder::class,
-            PublikasiSeeder::class,
         ]);
     }
 }
