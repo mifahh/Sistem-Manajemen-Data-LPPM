@@ -26,4 +26,25 @@ class DataMahasiswa extends Model
     {
         return ['GRADUATED', 'RESIGN', 'CHANGE MAJOR', 'NON-ACTIVE', 'STUDENT', 'PASSED AWAY', 'LEAVE'];
     }
+
+    public function penelitianMahasiswa()
+    {
+        return $this->hasMany(PenelitianMahasiswa::class, 'id_mahasiswa');
+    }
+
+    public function abdimasMahasiswa()
+    {
+        return $this->hasMany(AbdimasMahasiswa::class, 'id_mahasiswa');
+    }
+
+    public function kiAnggota()
+    {
+        return $this->hasMany(KIAnggota::class, 'id_mahasiswa');
+    }
+
+    // Relasi Publikasi
+    public function publikasiPenulis()
+    {
+        return $this->hasMany(PublikasiPenulis::class, 'id_mahasiswa');
+    }
 }

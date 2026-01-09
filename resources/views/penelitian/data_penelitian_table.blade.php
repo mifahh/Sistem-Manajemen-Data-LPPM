@@ -82,9 +82,7 @@
                                     <x-slot name="thead">
                                         <tr align="center">
                                             <th class="th-sm">No. SK</th>
-                                            <th class="th-sm">Link SK</th>
                                             <th class="th-sm">No. Kontrak</th>
-                                            <th class="th-sm">Link Kontrak</th>
                                             <th class="th-sm">Judul Penelitian</th>
                                             <th class="th-sm">Nama Skema</th>
                                             <th class="th-sm">Tahun Usulan</th>
@@ -101,39 +99,8 @@
                                             <th class="th-sm w-25">File Proposal</th>
                                             <th class="th-sm w-25">File Laporan Akhir</th>
                                             <th class="th-sm">Nama Ketua</th>
-                                            <th class="th-sm">Kode Ketua</th>
-                                            <th class="th-sm">Nama Member 1</th>
-                                            <th class="th-sm">Kode Member 1</th>
-                                            <th class="th-sm">Nama Member 2</th>
-                                            <th class="th-sm">Kode Member 2</th>
-                                            <th class="th-sm">Nama Member 3</th>
-                                            <th class="th-sm">Kode Member 3</th>
-                                            <th class="th-sm">Nama Member 4</th>
-                                            <th class="th-sm">Kode Member 4</th>
-                                            <th class="th-sm">Nama Member 5</th>
-                                            <th class="th-sm">Kode Member 5</th>
-                                            <th class="th-sm">Nama Member 6</th>
-                                            <th class="th-sm">Kode Member 6</th>
-                                            <th class="th-sm">Nama Member 7</th>
-                                            <th class="th-sm">Kode Member 7</th>
-                                            <th class="th-sm">Nama Member 8</th>
-                                            <th class="th-sm">Kode Member 8</th>
-                                            <th class="th-sm">Nama Mahasiswa 1</th>
-                                            <th class="th-sm">Prodi Mahasiswa 1</th>
-                                            <th class="th-sm">Nama Mahasiswa 2</th>
-                                            <th class="th-sm">Prodi Mahasiswa 2</th>
-                                            <th class="th-sm">Nama Mahasiswa 3</th>
-                                            <th class="th-sm">Prodi Mahasiswa 3</th>
-                                            <th class="th-sm">Nama Mahasiswa 4</th>
-                                            <th class="th-sm">Prodi Mahasiswa 4</th>
-                                            <th class="th-sm">Nama Mahasiswa 5</th>
-                                            <th class="th-sm">Prodi Mahasiswa 5</th>
-                                            <th class="th-sm">Nama Mahasiswa 6</th>
-                                            <th class="th-sm">Prodi Mahasiswa 6</th>
-                                            <th class="th-sm">Nama Mahasiswa 7</th>
-                                            <th class="th-sm">Prodi Mahasiswa 7</th>
-                                            <th class="th-sm">Nama Mahasiswa 8</th>
-                                            <th class="th-sm">Prodi Mahasiswa 8</th>
+                                            <th class="th-sm">Nama Member</th>
+                                            <th class="th-sm">Nama Mahasiswa</th>
                                             <th class="th-sm">Luaran Wajib</th>
                                             <th class="th-sm">Capaian Luaran Wajib</th>
                                             <th class="th-sm">Luaran Tambahan</th>
@@ -151,14 +118,12 @@
                                             @else
                                                 <td>{{ $item['no_sk'] ?? '-' }}</td>
                                             @endif
-                                                <td>{{ $item['link_sk'] ?? '-' }}</td>
                                             @if($item['no_kontrak'] != null && filter_var($item['link_kontrak'], FILTER_VALIDATE_URL))
                                                 <td><a href="{{ $item['link_kontrak'] }}" target="_blank"
                                                         rel="noopener noreferrer">{{ $item['no_kontrak'] }}</a></td>
                                             @else
                                                 <td>{{ $item['no_kontrak'] ?? '-' }}</td>
                                             @endif
-                                                <td>{{ $item['link_kontrak'] ?? '-' }}</td>
                                             <td>{{ $item['judul_penelitian'] ?? '-' }}</td>
                                             <td>{{ $item['nama_skema'] ?? '-' }}</td>
                                             <td>{{ $item['tahun_usulan'] ?? '-' }}</td>
@@ -172,42 +137,43 @@
                                             <td>{{ $item['sumber_dana'] ?? '-' }}</td>
                                             <td>{{ $item['negara_sumber_dana'] ?? '-' }}</td>
                                             <td>{{ $item['sdg'] ?? '-' }}</td>
-                                            <td>{{ $item['proposal'] ?? '-' }} </td>
-                                            <td>{{ $item['laporan_akhir'] ?? '-' }} </td>
+                                            @if($item['proposal'] != null && filter_var($item['proposal'], FILTER_VALIDATE_URL))
+                                                <td> <a href="{{ $item['proposal'] }}" target="_blank" rel="noopener noreferrer">
+                                                        <i class="fas fa-file-pdf fs-2 d-flex justify-content-center"></i></a>
+                                                </td>
+                                            @else
+                                                <td> {{ $item['proposal'] ?? '-' }} </td>
+                                            @endif
+                                            @if($item['laporan_akhir'] != null && filter_var($item['laporan_akhir'], FILTER_VALIDATE_URL))
+                                                <td> <a href="{{ $item['laporan_akhir'] }}" target="_blank"
+                                                        rel="noopener noreferrer"><i class="fas fa-file-pdf fs-2 d-flex justify-content-center"></i></a></td>
+                                            @else
+                                                <td> {{ $item['laporan_akhir'] ?? '-' }} </td>
+                                            @endif
                                             <td>{{ $item['nama_ketua'] ?? '-' }}</td>
-                                            <td>{{ $item['kode_ketua'] ?? '-' }}</td>
-                                            <td>{{ $item['nama_member1'] ?? null}}</td>
-                                            <td>{{ $item['kode_member1'] ?? null}}</td>
-                                            <td>{{ $item['nama_member2'] ?? null}}</td>
-                                            <td>{{ $item['kode_member2'] ?? null}}</td>
-                                            <td>{{ $item['nama_member3'] ?? null}}</td>
-                                            <td>{{ $item['kode_member3'] ?? null}}</td>
-                                            <td>{{ $item['nama_member4'] ?? null}}</td>
-                                            <td>{{ $item['kode_member4'] ?? null}}</td>
-                                            <td>{{ $item['nama_member5'] ?? null}}</td>
-                                            <td>{{ $item['kode_member5'] ?? null}}</td>
-                                            <td>{{ $item['nama_member6'] ?? null}}</td>
-                                            <td>{{ $item['kode_member6'] ?? null}}</td>
-                                            <td>{{ $item['nama_member7'] ?? null}}</td>
-                                            <td>{{ $item['kode_member7'] ?? null}}</td>
-                                            <td>{{ $item['nama_member8'] ?? null}}</td>
-                                            <td>{{ $item['kode_member8'] ?? null}}</td>
-                                            <td>{{ $item['nama_mhs1'] ?? null }}</td>
-                                            <td>{{ $item['prodi_mhs1'] ?? null }}</td>
-                                            <td>{{ $item['nama_mhs2'] ?? null }}</td>
-                                            <td>{{ $item['prodi_mhs2'] ?? null }}</td>
-                                            <td>{{ $item['nama_mhs3'] ?? null }}</td>
-                                            <td>{{ $item['prodi_mhs3'] ?? null }}</td>
-                                            <td>{{ $item['nama_mhs4'] ?? null }}</td>
-                                            <td>{{ $item['prodi_mhs4'] ?? null }}</td>
-                                            <td>{{ $item['nama_mhs5'] ?? null }}</td>
-                                            <td>{{ $item['prodi_mhs5'] ?? null }}</td>
-                                            <td>{{ $item['nama_mhs6'] ?? null }}</td>
-                                            <td>{{ $item['prodi_mhs6'] ?? null }}</td>
-                                            <td>{{ $item['nama_mhs7'] ?? null }}</td>
-                                            <td>{{ $item['prodi_mhs7'] ?? null }}</td>
-                                            <td>{{ $item['nama_mhs8'] ?? null }}</td>
-                                            <td>{{ $item['prodi_mhs8'] ?? null }}</td>
+                                            <td>
+                                                {{ collect([
+                                                    $item['nama_member1'] ?? null,
+                                                    $item['nama_member2'] ?? null,
+                                                    $item['nama_member3'] ?? null,
+                                                    $item['nama_member4'] ?? null,
+                                                    $item['nama_member5'] ?? null,
+                                                    $item['nama_member6'] ?? null,
+                                                    $item['nama_member7'] ?? null,
+                                                    $item['nama_member8'] ?? null,
+                                                ])->filter()->join(', ') ?: '-' }}
+                                            </td>
+                                            <td>{{ collect([
+                                                    $item['nama_mhs1'] ?? null,
+                                                    $item['nama_mhs2'] ?? null,
+                                                    $item['nama_mhs3'] ?? null,
+                                                    $item['nama_mhs4'] ?? null,
+                                                    $item['nama_mhs5'] ?? null,
+                                                    $item['nama_mhs6'] ?? null,
+                                                    $item['nama_mhs7'] ?? null,
+                                                    $item['nama_mhs8'] ?? null,
+                                                ])->filter()->join(', ') ?: '-' }}
+                                            </td>
                                             <td>{{ $item['luaran_wajib'] ?? '-' }}</td>
                                             <td>{{ $item['capaian_luaran_wajib'] ?? '-' }}</td>
                                             <td>{{ $item['luaran_tambahan'] ?? '-' }}</td>

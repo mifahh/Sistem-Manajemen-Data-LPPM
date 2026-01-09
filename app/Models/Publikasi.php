@@ -57,8 +57,6 @@ class Publikasi extends Model
             $data['prodi_' . $i]    = $penulis ? $penulis->prodi : null;
             $data['status_' . $i]   = $penulis ? $penulis->status : null;
             $data['afiliasi_' . $i] = $penulis ? $penulis->afiliasi : null;
-            $data['nim_' . $i]      = $penulis ? getNIMMahasiswaById($penulis->id_mahasiswa) : null;
-            $data['kode_dosen_' . $i] = $penulis ? getKodeDosenById($penulis->id_dosen) : null;
         }
 
         return $data;

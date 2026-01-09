@@ -23,7 +23,7 @@
     },
     "autoload": {
         "files": [
-            "storage/app/private/utils.php"
+            "public/utils.php"
         ],
         "psr-4": {
             "App\\": "app/",

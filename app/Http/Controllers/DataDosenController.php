@@ -144,7 +144,14 @@ class DataDosenController extends Controller
         DB::beginTransaction();
         try {
             $file = $request->file('file');
-            $spreadsheet = IOFactory::load($file);
+            // Buat reader khusus XLSX
+            $reader = IOFactory::createReader('Xlsx');
+
+            // Aktifkan mode read-only (hanya ambil value, abaikan style/format)
+            $reader->setReadDataOnly(true);
+
+            // Load file Excel
+            $spreadsheet = $reader->load($file);
             $worksheet = $spreadsheet->getSheetByName('Data Dosen All') ?? $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
 

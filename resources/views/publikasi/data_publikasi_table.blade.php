@@ -93,15 +93,12 @@
                                             <th class="th-sm">Akreditasi/Index</th>
                                             <th class="th-sm">Lembaga Pengindeks</th>
                                             <th class="th-sm">Tahun Published</th>
-                                            <th class="th-sm">DOI</th>
                                             <th class="th-sm">Nama Penulis Koresponding</th>
-                                            @for ($i = 1; $i <= 15; $i++)
-                                                <th class="th-sm">Nama Penulis {{ $i }}</th>
-                                                <th class="th-sm">Afiliasi {{ $i }}</th>
-                                                <th class="th-sm">Prodi {{ $i }}</th>
-                                                <th class="th-sm">Kode dosen {{ $i }}</th>
-                                                <th class="th-sm">NIM mahasiswa {{ $i }}</th>
-                                            @endfor
+                                            <th class="th-sm">Prodi</th>
+                                            <th class="th-sm">Status</th>
+                                            <th class="th-sm">Afiliasi</th>
+                                            <th class="th-sm">Nama Penulis</th>
+                                            <th class="th-sm">DOI</th>
                                             @if (Auth::check() && Auth::user()->aktor_id == '1')
                                                 <th class="th-sm no-export">Tindakan</th>
                                             @endif
@@ -114,15 +111,24 @@
                                             <td>{{ $item['akreditasi_index_jurnal'] ?? '-' }}</td>
                                             <td>{{ $item['lembaga_pengindeks'] ?? '-' }}</td>
                                             <td>{{ $item['tahun_published'] ?? '-' }}</td>
-                                            <td>{{ $item['doi'] ?? '-' }}</td>
                                             <td>{{ $item['nama_penulis_koresponding'] ?? '-' }}</td>
-                                            @for ($i = 1; $i <= 15; $i++)
-                                                <td>{{ $item['penulis_' . $i] ?? '-' }}</td>
-                                                <td>{{ $item['afiliasi_' . $i] ?? '-' }}</td>
-                                                <td>{{ $item['prodi_' . $i] ?? '-' }}</td>
-                                                <td>{{ $item['kode_dosen_' . $i] ?? '-' }}</td>
-                                                <td>{{ $item['nim_' . $i] ?? '-' }}</td>
-                                            @endfor
+                                            <td>{{ $item['prodi'] ?? '-' }}</td>
+                                            <td>{{ $item['status'] ?? '-' }}</td>
+                                            <td>{{ $item['afiliasi'] ?? '-' }}</td>
+                                            <td>{{ collect([
+                                                $item['penulis_1'] ?? null,
+                                                $item['penulis_2'] ?? null,
+                                                $item['penulis_3'] ?? null,
+                                                $item['penulis_4'] ?? null,
+                                                $item['penulis_5'] ?? null,
+                                                $item['penulis_6'] ?? null,
+                                                $item['penulis_lain'] ?? null
+                                            ])->filter()->join(', ') ?: '-' }}</td>
+                                            @if($item['doi'] != null && filter_var($item['doi'], FILTER_VALIDATE_URL))
+                                                <td><a href="{{ $item['doi'] }}" target="_blank" rel="noopener noreferrer"><i class="fas fa-file-pdf fs-2 d-flex justify-content-center"></i></a></td>
+                                            @else
+                                                <td>{{ $item['doi'] ?? '-' }}</td>
+                                            @endif
                                             @if (Auth::check() && Auth::user()->aktor_id == '1')
                                                 <td class="project-actions text-center">
                                                     <a class="btn btn-info btn-sm" href="#" data-toggle="modal"
@@ -462,5 +468,6 @@
         }
     @endphp
     <x-table.datatable-config tableId="data_publikasi" :hasExport="true"
+
     />
 @endsection

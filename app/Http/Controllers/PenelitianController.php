@@ -202,6 +202,7 @@ class PenelitianController extends Controller
                 if (!empty($request->input('nama_mhs' . $i))) {
                     PenelitianMahasiswa::create([
                         'id_penelitian' => $penelitian->id,
+                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'nama_mhs' => $request->input('nama_mhs' . $i),
                         'prodi_mhs' => $request->input('prodi_mhs' . $i),
                     ]);
@@ -301,6 +302,7 @@ class PenelitianController extends Controller
                 if (!empty($request->input('nama_mhs' . $i))) {
                     PenelitianMahasiswa::create([
                         'id_penelitian' => $penelitian->id,
+                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'nama_mhs' => $request->input('nama_mhs' . $i),
                         'prodi_mhs' => $request->input('prodi_mhs' . $i),
                     ]);
@@ -349,14 +351,7 @@ class PenelitianController extends Controller
         DB::beginTransaction();
         try {
             $file = $request->file('file');
-            // Buat reader khusus XLSX
-            $reader = IOFactory::createReader('Xlsx');
-
-            // Aktifkan mode read-only (hanya ambil value, abaikan style/format)
-            $reader->setReadDataOnly(true);
-
-            // Load file Excel
-            $spreadsheet = $reader->load($file);
+            $spreadsheet = IOFactory::load($file);
             $worksheet = $spreadsheet->getSheetByName('PNLT MASTER DATA') ?? $spreadsheet->getActiveSheet();
             $rows = $worksheet->toArray();
 
@@ -365,6 +360,25 @@ class PenelitianController extends Controller
 
             // Get headers from first row
             $headers = array_shift($rows);
+            // Expected headers yang wajib ada
+            $expectedHeaders = [
+                'Judul Penelitian',
+                'No. SK', 'No. Kontrak', 'Nama Skema', 'Tahun Usulan', 'Tahun Pelaksanaan Kegiatan',
+                'Lama Kegiatan (bulan)', 'Bidang Fokus', 'Dana Disetujui', 'Target TKT',
+                'Nama Program Hibah', 'Kategori Sumber Dana', 'Negara Sumber Dana', 'Sumber Dana',
+                'Nama Ketua', 'DANA KETUA', 'PT'
+            ];
+
+            // Validasi header
+            foreach ($expectedHeaders as $header) {
+                if (!in_array($header, $headers)) {
+                    DB::rollBack();
+                    return redirect()->back()->with(
+                        'error',
+                        "Template tidak sesuai. Header '$header' tidak ditemukan."
+                    );
+                }
+            }
 
             // Create a helper function to find column index with flexible matching
             $findColumn = function($searchTerms) use ($headers) {
@@ -491,6 +505,7 @@ class PenelitianController extends Controller
                     if (!empty($namaMhs)) {
                         PenelitianMahasiswa::create([
                             'id_penelitian' => $penelitian->id,
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
                             'nama_mhs' => $namaMhs,
                             'prodi_mhs' => $getValue($headers, $row, $findColumn(['Prodi Mhs' . $i, 'Prodi Mahasiswa' . $i, 'Prodi' . $i, 'prodi_mhs' . $i])),
                         ]);

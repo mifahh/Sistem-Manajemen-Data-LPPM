@@ -7,6 +7,7 @@ use App\Models\KI;
 use App\Models\KIAnggota;
 use Illuminate\Support\Facades\DB;
 use PhpOffice\PhpSpreadsheet\IOFactory;
+use Illuminate\Support\Facades\Log;
 
 class KiController extends Controller
 {
@@ -17,6 +18,7 @@ class KiController extends Controller
     public function data_ki_table(Request $request)
     {
         $query = KI::with('anggota')->whereNull('deleted_at');
+        $this->updateIdFromNama();
         $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : KI::max('application_year');
 
         $query->when(
@@ -45,6 +47,32 @@ class KiController extends Controller
             'kategori' => $kategori,
             'jml_ki' => $data_ki->count()
         ]);
+    }
+
+        private function updateIdFromNama()
+    {
+        try {
+            $publikasiPenulis = KIAnggota::whereNull('deleted_at')->get();
+
+            foreach ($publikasiPenulis as $penulis) {
+                if ($penulis->id_dosen === null) {
+                    $dosen = \App\Models\DataDosen::where('nama_dosen', $penulis->anggota)->first();
+                    $mahasiswa = \App\Models\DataMahasiswa::where('nama_mahasiswa', $penulis->anggota)->first();
+                    if ($dosen) {
+                        $penulis->id_dosen = $dosen->id;
+                        $penulis->save();
+                    }
+                    if ($mahasiswa) {
+                        $penulis->id_mahasiswa = $mahasiswa->id;
+                        $penulis->save();
+                    }
+                }
+            }
+
+            Log::info('Successfully updated id_dosen for publikasi_penulis');
+        } catch (\Exception $e) {
+            Log::error('Error updating id_dosen: ' . $e->getMessage());
+        }
     }
 
     public function tambah_data_ki_table(Request $request)
@@ -107,7 +135,6 @@ class KiController extends Controller
             return redirect()->back()->with('error', 'Gagal menambahkan data: ' . $e->getMessage());
         }
     }
-
     public function edit_data_ki_table(Request $request)
     {
         $messages = [
@@ -202,6 +229,14 @@ class KiController extends Controller
             // Get headers from first row
             $headers = array_shift($rows);
 
+            $expectedHeaders = ['Application Number','Kategori','APPLICATION YEAR','TITLE','Jenis HKI','Prototipe','PATENT HOLDER','INVENTOR','Jabatan','Prodi','PUBLICATION NUMBER','Publication Date','Filling Date','Reception Date','Registration Date','Registration Number','Status','Link'];
+
+            foreach ($expectedHeaders as $header) {
+                if (!in_array($header, $headers)) {
+                    throw new \Exception("Template tidak sesuai. Header '$header' tidak ditemukan.");
+                }
+            }
+
             // Process each row
             foreach ($rows as $rowIndex => $row) {
                 if (empty(array_filter($row))) continue; // Skip empty rows
@@ -233,7 +268,7 @@ class KiController extends Controller
                     'application_year' => $rowData['APPLICATION YEAR'] ?? null,
                     'title' => $rowData['TITLE'] ?? null,
                     'jenis_hki' => $rowData['Jenis HKI'] ?? null,
-                    'prototype' => $rowData['Protoipe'] ?? null,
+                    'prototype' => $rowData['Prototipe'] ?? null,
                     'patent_holder' => $rowData['PATENT HOLDER'] ?? null,
                     'inventor' => $rowData['INVENTOR'] ?? null,
                     'jabatan' => $rowData['Jabatan'] ?? null,
@@ -254,6 +289,8 @@ class KiController extends Controller
                     if (!empty($rowData['Anggota ' . $i] ?? null)) {
                         KIAnggota::create([
                             'id_ki' => $dataKi->id,
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($rowData['Anggota ' . $i] ?? null),
+                            'id_dosen' => $this->getIdDosenByNama($rowData['Anggota ' . $i] ?? null),
                             'anggota' => $rowData['Anggota ' . $i] ?? null,
                             'status_anggota' => $rowData['Status Anggota ' . $i] ?? null,
                         ]);
@@ -264,7 +301,7 @@ class KiController extends Controller
             return redirect()->back()->with('success', 'Data berhasil diimport');
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', 'Gagal import: template file tidak sesuai atau terjadi kesalahan sistem. ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Gagal import: ' . $e->getMessage());
         }
     }
 }

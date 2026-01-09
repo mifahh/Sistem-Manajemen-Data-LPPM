@@ -363,6 +363,26 @@ class AbdimasController extends Controller
             // Get headers from first row
             $headers = array_shift($rows);
 
+            // Expected headers yang wajib ada
+            $expectedHeaders = [
+                'Judul Penelitian',
+                'No. SK', 'No. Kontrak', 'Nama Skema', 'Tahun Usulan', 'Tahun Pelaksanaan Kegiatan',
+                'Lama Kegiatan (bulan)', 'Bidang Fokus', 'Dana Disetujui', 'Target TKT',
+                'Nama Program Hibah', 'Kategori Sumber Dana', 'Negara Sumber Dana', 'Sumber Dana',
+                'Nama Ketua', 'DANA KETUA', 'PT'
+            ];
+
+            // Validasi header
+            foreach ($expectedHeaders as $header) {
+                if (!in_array($header, $headers)) {
+                    DB::rollBack();
+                    return redirect()->back()->with(
+                        'error',
+                        "Template tidak sesuai. Header '$header' tidak ditemukan."
+                    );
+                }
+            }
+
             // Create a helper function to find column index with flexible matching
             $findColumn = function($searchTerms) use ($headers) {
                 $searchTerms = (array)$searchTerms;
@@ -482,6 +502,7 @@ class AbdimasController extends Controller
                     if (!empty($namaMhs)) {
                         \App\Models\AbdimasMahasiswa::create([
                             'id_abdimas' => $abdimas->id,
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
                             'nama_mhs' => $namaMhs,
                             'prodi_mhs' => $getValue($headers, $row, $findColumn(['Prodi Mhs' . $i, 'Prodi Mahasiswa' . $i, 'Prodi' . $i, 'prodi_mhs' . $i])),
                         ]);

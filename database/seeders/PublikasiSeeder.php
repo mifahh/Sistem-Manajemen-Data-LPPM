@@ -79,7 +79,7 @@ class PublikasiSeeder extends Seeder
 
             // Create anggota data
             for ($i = 1; $i <= 6; $i++) {
-                $namaPenulis = trim($rowData['Nama Penulis (' . $i . ')'] ?? '');
+                $namaPenulis = trim($rowData['Nama Penulis' . $i] ?? '');
                 // Skip jika kosong atau hanya berisi dash/placeholder
                 if (!empty($namaPenulis) && $namaPenulis !== '-') {
                     PublikasiPenulis::create([
