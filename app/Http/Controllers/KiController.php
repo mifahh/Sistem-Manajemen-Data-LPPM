@@ -16,7 +16,6 @@ class KiController extends Controller
     }
     public function data_ki_table(Request $request)
     {
-        $this->updateIdFromNama();
         $query = KI::with('anggota')->whereNull('deleted_at');
         $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : KI::max('application_year');
 
@@ -46,31 +45,6 @@ class KiController extends Controller
             'kategori' => $kategori,
             'jml_ki' => $data_ki->count()
         ]);
-    }
-
-    private function updateIdFromNama()
-    {
-        try {
-            // Update id_dosen for all KI based on anggota names
-            $kiRecords = KI::with('anggota')->get();
-
-            foreach ($kiRecords as $ki) {
-                foreach ($ki->anggota as $anggota) {
-                    $dosen = \App\Models\DataDosen::where('nama_dosen', $anggota->anggota)->first();
-                    $mahasiswa = \App\Models\DataMahasiswa::where('nama_mahasiswa', $anggota->anggota)->first();
-                    if ($dosen) {
-                        $anggota->id_dosen = $dosen->id;
-                        $anggota->save();
-                    }
-                    if ($mahasiswa) {
-                        $anggota->id_mahasiswa = $mahasiswa->id;
-                        $anggota->save();
-                    }
-                }
-            }
-        } catch (\Exception $e) {
-            // Log error if needed
-        }
     }
 
     public function tambah_data_ki_table(Request $request)
@@ -117,6 +91,7 @@ class KiController extends Controller
                     KIAnggota::create([
                         'id_ki' => $dataKi->id,
                         'id_dosen' => $this->getIdDosenByNama($request->input("anggota_{$i}")),
+                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input("anggota_{$i}")),
                         'anggota' => $request->input("anggota_{$i}"),
                         'status_anggota' => $request->input("status_anggota_{$i}"),
                         'prodi' => $request->input("prodi_{$i}"),
@@ -178,6 +153,7 @@ class KiController extends Controller
                     KIAnggota::create([
                         'id_ki' => $dataKi->id,
                         'id_dosen' => $this->getIdDosenByNama($request->input("anggota_{$i}")),
+                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input("anggota_{$i}")),
                         'anggota' => $request->input("anggota_{$i}"),
                         'status_anggota' => $request->input("status_anggota_{$i}"),
                         'prodi' => $request->input("prodi_{$i}"),
@@ -258,7 +234,7 @@ class KiController extends Controller
                     'title' => $rowData['TITLE'] ?? null,
                     'jenis_hki' => $rowData['Jenis HKI'] ?? null,
                     'prototype' => $rowData['Protoipe'] ?? null,
-                    'patent_holder' => $rowData['Patent Holder'] ?? null,
+                    'patent_holder' => $rowData['PATENT HOLDER'] ?? null,
                     'inventor' => $rowData['INVENTOR'] ?? null,
                     'jabatan' => $rowData['Jabatan'] ?? null,
                     'prodi' => $rowData['Prodi'] ?? null,
@@ -274,13 +250,12 @@ class KiController extends Controller
                 ]);
 
                 // Create anggota data
-                for ($i = 1; $i <= 10; $i++) {
+                for ($i = 1; $i <= 12; $i++) {
                     if (!empty($rowData['Anggota ' . $i] ?? null)) {
                         KIAnggota::create([
                             'id_ki' => $dataKi->id,
                             'anggota' => $rowData['Anggota ' . $i] ?? null,
                             'status_anggota' => $rowData['Status Anggota ' . $i] ?? null,
-                            'prodi' => $rowData['Prodi ' . $i] ?? null,
                         ]);
                     }
                 }
@@ -289,7 +264,7 @@ class KiController extends Controller
             return redirect()->back()->with('success', 'Data berhasil diimport');
         } catch (\Exception $e) {
             DB::rollback();
-            return redirect()->back()->with('error', $e->getMessage() . 'Gagal import: template file tidak sesuai atau terjadi kesalahan sistem.');
+            return redirect()->back()->with('error', 'Gagal import: template file tidak sesuai atau terjadi kesalahan sistem. ' . $e->getMessage());
         }
     }
 }

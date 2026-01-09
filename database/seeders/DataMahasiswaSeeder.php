@@ -74,7 +74,7 @@ class DataMahasiswaSeeder extends Seeder
                 // Update existing
                 $existing->update([
                     'nim' => $nim,
-                    'nama' => $nama,
+                    'nama_mahasiswa' => $nama,
                     'prodi' => $prodi,
                     'status' => $status,
                     'angkatan' => $angkatan,
@@ -87,7 +87,7 @@ class DataMahasiswaSeeder extends Seeder
 
                 DataMahasiswa::create([
                     'nim' => $nim,
-                    'nama' => $nama,
+                    'nama_mahasiswa' => $nama,
                     'prodi' => $prodi,
                     'status' => $status,
                     'angkatan' => $angkatan,

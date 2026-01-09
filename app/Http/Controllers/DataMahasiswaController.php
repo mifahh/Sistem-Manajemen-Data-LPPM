@@ -71,7 +71,7 @@ class DataMahasiswaController extends Controller
 
         $request->validate([
             'nim' => 'required|string|unique:data_mahasiswa,nim',
-            'nama' => 'required|string',
+            'nama_mahasiswa' => 'required|string',
             'prodi' => 'required|string',
             'status' => 'required|in:GRADUATED,RESIGN,CHANGE MAJOR,NON-ACTIVE,STUDENT,PASSED AWAY,LEAVE',
             'angkatan' => 'required|string',
@@ -81,7 +81,7 @@ class DataMahasiswaController extends Controller
         try {
             DataMahasiswa::create([
                 'nim' => $request->nim,
-                'nama' => $request->nama,
+                'nama_mahasiswa' => $request->nama_mahasiswa,
                 'prodi' => $request->prodi,
                 'status' => $request->status,
                 'angkatan' => $request->angkatan,
@@ -108,7 +108,7 @@ class DataMahasiswaController extends Controller
         $request->validate([
             'id' => 'required|exists:data_mahasiswa,id',
             'nim' => 'required|string|unique:data_mahasiswa,nim,' . $request->id,
-            'nama' => 'required|string',
+            'nama_mahasiswa' => 'required|string',
             'prodi' => 'required|string',
             'status' => 'required|in:GRADUATED,RESIGN,CHANGE MAJOR,NON-ACTIVE,STUDENT,PASSED AWAY,LEAVE',
             'angkatan' => 'required|string',
@@ -119,7 +119,7 @@ class DataMahasiswaController extends Controller
             $dataMahasiswa = DataMahasiswa::findOrFail($request->id);
             $dataMahasiswa->update([
                 'nim' => $request->nim,
-                'nama' => $request->nama,
+                'nama_mahasiswa' => $request->nama_mahasiswa,
                 'prodi' => $request->prodi,
                 'status' => $request->status,
                 'angkatan' => $request->angkatan,

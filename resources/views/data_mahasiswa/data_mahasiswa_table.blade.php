@@ -108,7 +108,7 @@
                                     @foreach ($data_mahasiswa as $index => $item)
                                         <tr>
                                             <td class="text-center">{{ $item->nim ?? '-' }}</td>
-                                            <td>{{ $item->nama ?? '-' }}</td>
+                                            <td>{{ $item->nama_mahasiswa ?? '-' }}</td>
                                             <td>{{ $item->prodi ?? '-' }}</td>
                                             <td class="text-center">
                                                 @php
@@ -231,8 +231,8 @@
                 <div class="form-group row">
                     <label for="nama_edit{{ $item->id }}" class="col-sm-2 col-form-label d-flex align-items-center">Nama</label>
                     <div class="col-sm-10 d-flex align-items-center">
-                        <input type="text" class="form-control" id="nama_edit{{ $item->id }}" name="nama"
-                            placeholder="Isikan Nama Mahasiswa" value="{{ $item->nama }}" required>
+                        <input type="text" class="form-control" id="nama_edit{{ $item->id }}" name="nama_mahasiswa"
+                            placeholder="Isikan Nama Mahasiswa" value="{{ $item->nama_mahasiswa }}" required>
                     </div>
                 </div>
 

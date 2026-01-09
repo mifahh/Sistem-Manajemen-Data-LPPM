@@ -198,6 +198,7 @@ class AbdimasController extends Controller
                 if (!empty($request->input('nama_mhs' . $i))) {
                     \App\Models\AbdimasMahasiswa::create([
                         'id_abdimas' => $abdimas->id,
+                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'nama_mhs' => $request->input('nama_mhs' . $i),
                         'prodi_mhs' => $request->input('prodi_mhs' . $i),
                     ]);
@@ -302,6 +303,7 @@ class AbdimasController extends Controller
                 if (!empty($request->input('nama_mhs' . $i))) {
                     \App\Models\AbdimasMahasiswa::create([
                         'id_abdimas' => $abdimas->id,
+                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'nama_mhs' => $request->input('nama_mhs' . $i),
                         'prodi_mhs' => $request->input('prodi_mhs' . $i),
                     ]);

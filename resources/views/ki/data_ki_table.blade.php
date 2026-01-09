@@ -123,10 +123,14 @@
                                                 @else
                                                 <td>{{ $item['publication_number'] ?? '-' }}</td>
                                                 @endif
-                                                <td>{{ $item['publication_date'] ? \Carbon\Carbon::parse($item['publication_date'])->format('d-m-Y') : '-' }}</td>
+                                                {{-- <td>{{ $item['publication_date'] ? \Carbon\Carbon::parse($item['publication_date'])->format('d-m-Y') : '-' }}</td>
                                                 <td>{{ $item['filling_date'] ? \Carbon\Carbon::parse($item['filling_date'])->format('d-m-Y') : '-' }}</td>
                                                 <td>{{ $item['reception_date'] ? \Carbon\Carbon::parse($item['reception_date'])->format('d-m-Y') : '-' }}</td>
-                                                <td>{{ $item['registration_date'] ? \Carbon\Carbon::parse($item['registration_date'])->format('d-m-Y') : '-' }}</td>
+                                                <td>{{ $item['registration_date'] ? \Carbon\Carbon::parse($item['registration_date'])->format('d-m-Y') : '-' }}</td> --}}
+                                                <td>{{ $item['publication_date'] ?? '-' }}</td>
+                                                <td>{{ $item['filling_date'] ?? '-' }}</td>
+                                                <td>{{ $item['reception_date'] ?? '-' }}</td>
+                                                <td>{{ $item['registration_date'] ?? '-' }}</td>
                                                 <td>{{ $item['registration_number'] ?? '-' }}</td>
                                                 <td>{{ $item['status'] ?? '-' }}</td>
                                                 <td>
@@ -455,22 +459,22 @@
                     <div class="form-group row">
                         <label for="publication_date_edit" class="col-sm-2 col-form-label d-flex align-items-center">Publication Date</label>
                         <div class="col-sm-4 d-flex align-items-center">
-                            <input type="date" class="form-control" id="publication_date_edit" name="publication_date" value="{{ $item['publication_date'] ? \Carbon\Carbon::parse($item['publication_date'])->format('Y-m-d') : '' }}">
+                            <input type="date" class="form-control" id="publication_date_edit" name="publication_date" value="{{ $item['publication_date'] ?? '' }}">
                         </div>
                         <label for="filling_date_edit" class="col-sm-2 col-form-label d-flex align-items-center">Filling Date</label>
                         <div class="col-sm-4 d-flex align-items-center">
-                            <input type="date" class="form-control" id="filling_date_edit" name="filling_date" value="{{ $item['filling_date'] ? \Carbon\Carbon::parse($item['filling_date'])->format('Y-m-d') : '' }}">
+                            <input type="date" class="form-control" id="filling_date_edit" name="filling_date" value="{{ $item['filling_date'] ?? '' }}">
                         </div>
                     </div>
 
                     <div class="form-group row">
                         <label for="reception_date_edit" class="col-sm-2 col-form-label d-flex align-items-center">Reception Date</label>
                         <div class="col-sm-4 d-flex align-items-center">
-                            <input type="date" class="form-control" id="reception_date_edit" name="reception_date" value="{{ $item['reception_date'] ? \Carbon\Carbon::parse($item['reception_date'])->format('Y-m-d') : '' }}">
+                            <input type="date" class="form-control" id="reception_date_edit" name="reception_date" value="{{ $item['reception_date'] ?? '' }}">
                         </div>
                         <label for="registration_date_edit" class="col-sm-2 col-form-label d-flex align-items-center">Registration Date</label>
                         <div class="col-sm-4 d-flex align-items-center">
-                            <input type="date" class="form-control" id="registration_date_edit" name="registration_date" value="{{ $item['registration_date'] ? \Carbon\Carbon::parse($item['registration_date'])->format('Y-m-d') : '' }}">
+                            <input type="date" class="form-control" id="registration_date_edit" name="registration_date" value="{{ $item['registration_date'] ?? '' }}">
                         </div>
                     </div>
 

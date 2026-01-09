@@ -15,7 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('application_number')->nullable();
             $table->string('kategori')->nullable();
-            $table->integer('application_year')->nullable();
+            $table->string('application_year')->nullable();
             $table->string('title')->nullable();
             $table->string('jenis_hki')->nullable();
             $table->string('prototype')->nullable();
@@ -26,10 +26,10 @@ return new class extends Migration
             $table->string('prodi')->nullable();
             $table->string('publication_number')->nullable();
             $table->string('publication_link')->nullable();
-            $table->date('publication_date')->nullable();
-            $table->date('filling_date')->nullable();
-            $table->date('reception_date')->nullable();
-            $table->date('registration_date')->nullable();
+            $table->string('publication_date')->nullable();
+            $table->string('filling_date')->nullable();
+            $table->string('reception_date')->nullable();
+            $table->string('registration_date')->nullable();
             $table->string('registration_number')->nullable();
             $table->string('status')->nullable();
             $table->string('link')->nullable();

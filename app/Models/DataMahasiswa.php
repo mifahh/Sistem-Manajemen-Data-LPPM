@@ -13,7 +13,7 @@ class DataMahasiswa extends Model
     protected $table = "data_mahasiswa";
 
     protected $fillable = [
-        'nim', 'nama', 'prodi', 'status', 'angkatan'
+        'nim', 'nama_mahasiswa', 'prodi', 'status', 'angkatan'
     ];
 
     protected $casts = [

@@ -35,19 +35,20 @@ class KI extends Model
         'link'
     ];
 
-    protected $dates = [
-        'publication_date',
-        'filling_date',
-        'reception_date',
-        'registration_date',
-    ];
+    //try standarize date format
+    // protected $dates = [
+    //     'publication_date',
+    //     'filling_date',
+    //     'reception_date',
+    //     'registration_date',
+    // ];
 
-    protected $casts = [
-        'publication_date' => 'date',
-        'filling_date' => 'date',
-        'reception_date' => 'date',
-        'registration_date' => 'date',
-    ];
+    // protected $casts = [
+    //     'publication_date' => 'date',
+    //     'filling_date' => 'date',
+    //     'reception_date' => 'date',
+    //     'registration_date' => 'date',
+    // ];
 
     public function anggota()
     {

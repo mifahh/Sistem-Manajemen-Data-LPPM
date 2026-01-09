@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('data_mahasiswa', function (Blueprint $table) {
             $table->id();
             $table->string('nim')->unique();
-            $table->string('nama');
+            $table->string('nama_mahasiswa');
             $table->string('prodi');
             $table->enum('status', ['GRADUATED', 'RESIGN', 'CHANGE MAJOR', 'NON-ACTIVE', 'STUDENT', 'PASSED AWAY', 'LEAVE']);
             $table->string('angkatan');
