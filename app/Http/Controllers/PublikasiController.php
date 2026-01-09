@@ -40,6 +40,9 @@ class PublikasiController extends Controller
             fn ($q) => $q->where('akreditasi_index_jurnal', '-')
         );
 
+        $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : Publikasi::max('tahun_published');
+        $selected_akreditasi = ($request->has('akreditasi_index_jurnal') && $request->akreditasi_index_jurnal != '') ? $request->akreditasi_index_jurnal : '-';
+
         $data_publikasi = $query->get();
         $tahun_filter = Publikasi::select('tahun_published')->distinct()->orderBy('tahun_published', 'desc')->pluck('tahun_published');
         $tahun = \App\Models\MasterTahun::all();
@@ -57,10 +60,38 @@ class PublikasiController extends Controller
             'publikasi' => $transformedData,
             'tahun' => $tahun,
             'tahun_filter' => $tahun_filter,
+            'selected_tahun' => $selected_tahun,
+            'selected_akreditasi' => $selected_akreditasi,
             'jurusan' => $jurusan,
             'akreditasi_index_jurnal' => $akreditasi_index_jurnal,
             'jml_publikasi' => $jml_publikasi
         ]);
+    }
+
+    private function updateIdFromNama()
+    {
+        try {
+            $publikasiPenulis = PublikasiPenulis::whereNull('deleted_at')->get();
+
+            foreach ($publikasiPenulis as $penulis) {
+                if ($penulis->id_dosen === null) {
+                    $dosen = \App\Models\DataDosen::where('nama_dosen', $penulis->nama_penulis)->first();
+                    $mahasiswa = \App\Models\DataMahasiswa::where('nama_mahasiswa', $penulis->nama_penulis)->first();
+                    if ($dosen) {
+                        $penulis->id_dosen = $dosen->id;
+                        $penulis->save();
+                    }
+                    if ($mahasiswa) {
+                        $penulis->id_mahasiswa = $mahasiswa->id;
+                        $penulis->save();
+                    }
+                }
+            }
+
+            Log::info('Successfully updated id_dosen for publikasi_penulis');
+        } catch (\Exception $e) {
+            Log::error('Error updating id_dosen: ' . $e->getMessage());
+        }
     }
 
     public function tambah_data_publikasi_table(Request $request)
@@ -122,11 +153,10 @@ class PublikasiController extends Controller
     {
         $messages = [
             'required' => ':attribute wajib diisi, tidak boleh kosong',
-            'unique' => ':attribute sudah ada',
         ];
         $request->validate([
             'id' => 'required|integer',
-            'judul_publikasi' => 'required|string|unique:data_publikasi,judul_publikasi',
+            'judul_publikasi' => 'required|string',
             'nama_jurnal' => 'required|string',
             'tahun_published' => 'required|integer',
             'nama_penulis_koresponding' => 'required|string',

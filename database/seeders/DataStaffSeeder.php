@@ -59,6 +59,10 @@ class DataStaffSeeder extends Seeder
                 throw new \Exception("Row " . ($rowIndex + 2) . ": Missing required fields (nama_staff)");
             }
 
+            if (empty($nip)) {
+                continue; // Skip if NIP is empty
+            }
+
             //cek aktif-nocount
             // if (trim((string) $getValue(['Status Aktif', 'status', 'aktif', 'active'])) === 'Aktif-NoCount') {
             //     throw new \Exception("Row " . ($rowIndex + 2) . $nama_dosen. trim((string) $getValue(['Status Aktif', 'status', 'aktif', 'active'])). $status_aktif);

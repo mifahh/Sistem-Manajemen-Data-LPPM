@@ -14,6 +14,7 @@ class AbdimasMahasiswa extends Model
 
     protected $fillable = [
         'id_abdimas',
+        'id_mahasiswa',
         'nama_mhs',
         'prodi_mhs',
     ];
@@ -21,5 +22,10 @@ class AbdimasMahasiswa extends Model
     public function abdimas()
     {
         return $this->belongsTo(Abdimas::class, 'id_abdimas');
+    }
+
+    public function mahasiswa()
+    {
+        return $this->belongsTo(DataMahasiswa::class, 'id_mahasiswa');
     }
 }

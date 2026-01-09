@@ -7,6 +7,7 @@ use Illuminate\Foundation\Bus\DispatchesJobs;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Routing\Controller as BaseController;
 use App\Models\DataDosen;
+use App\Models\DataMahasiswa;
 
 class Controller extends BaseController
 {
@@ -26,6 +27,18 @@ class Controller extends BaseController
             ->first();
 
         return $dosen ? $dosen->id : null;
+    }
+
+    protected function getIdMahasiswaByNama($nama_mahasiswa)
+    {
+        if (empty($nama_mahasiswa)) {
+            return null;
+        }
+
+        $mahasiswa = DataMahasiswa::where('nama_mahasiswa', 'like', '%' . trim($nama_mahasiswa) . '%')
+            ->first();
+
+        return $mahasiswa ? $mahasiswa->id : null;
     }
 }
 

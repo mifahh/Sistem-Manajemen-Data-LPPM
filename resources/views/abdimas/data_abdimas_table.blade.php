@@ -68,7 +68,7 @@
                                             <label for="tahun">Tahun Pelaksanaan</label>
                                             <select name="tahun_filter" id="tahun_filter" class="form-select" required onchange="this.form.submit()">
                                                 @foreach ($tahun_filter as $item)
-                                                    <option value="{{ $item }}" {{ (request('tahun_filter') == $item) ? 'selected' : '' }}>{{ $item }}</option>
+                                                    <option value="{{ $item }}" {{ ($selected_tahun ?? request('tahun_filter')) == $item ? 'selected' : '' }}>{{ $item }}</option>
                                                 @endforeach
                                             </select>
                                         </div>

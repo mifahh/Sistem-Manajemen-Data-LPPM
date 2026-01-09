@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('penelitian_mahasiswa', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_penelitian')->constrained('penelitian_main')->cascadeOnDelete();
+            $table->foreignId('id_mahasiswa')->nullable()->constrained('data_mahasiswa');
 
             // Mahasiswa information
             $table->string('nama_mhs')->nullable();

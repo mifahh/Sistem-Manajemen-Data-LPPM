@@ -16,7 +16,9 @@ class KiController extends Controller
     }
     public function data_ki_table(Request $request)
     {
+        $this->updateIdFromNama();
         $query = KI::with('anggota')->whereNull('deleted_at');
+        $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : KI::max('application_year');
 
         $query->when(
             $request->filled('tahun_filter') && $request->tahun_filter !== '',
@@ -38,11 +40,37 @@ class KiController extends Controller
         return view('ki.data_ki_table', [
             'ki' => $transformedData,
             'tahun_filter' => $tahun_filter,
+            'selected_tahun' => $selected_tahun,
             'tahun' => $tahun,
             'jurusan' => $jurusan,
             'kategori' => $kategori,
             'jml_ki' => $data_ki->count()
         ]);
+    }
+
+    private function updateIdFromNama()
+    {
+        try {
+            // Update id_dosen for all KI based on anggota names
+            $kiRecords = KI::with('anggota')->get();
+
+            foreach ($kiRecords as $ki) {
+                foreach ($ki->anggota as $anggota) {
+                    $dosen = \App\Models\DataDosen::where('nama_dosen', $anggota->anggota)->first();
+                    $mahasiswa = \App\Models\DataMahasiswa::where('nama_mahasiswa', $anggota->anggota)->first();
+                    if ($dosen) {
+                        $anggota->id_dosen = $dosen->id;
+                        $anggota->save();
+                    }
+                    if ($mahasiswa) {
+                        $anggota->id_mahasiswa = $mahasiswa->id;
+                        $anggota->save();
+                    }
+                }
+            }
+        } catch (\Exception $e) {
+            // Log error if needed
+        }
     }
 
     public function tambah_data_ki_table(Request $request)
@@ -109,13 +137,12 @@ class KiController extends Controller
     {
         $messages = [
             'required' => ':attribute wajib diisi, tidak boleh kosong',
-            'unique' => ':attribute sudah ada',
         ];
         $request->validate([
             'id' => 'required|exists:data_ki,id',
             'kategori' => 'required|string',
             'application_year' => 'required|integer',
-            'title' => 'required|string|unique:data_ki,title',
+            'title' => 'required|string',
             'jenis_hki' => 'required|string',
             'status' => 'required|string',
         ], $messages);

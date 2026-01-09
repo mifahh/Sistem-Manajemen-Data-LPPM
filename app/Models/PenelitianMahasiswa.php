@@ -14,6 +14,7 @@ class PenelitianMahasiswa extends Model
 
     protected $fillable = [
         'id_penelitian',
+        'id_mahasiswa',
         'nama_mhs',
         'prodi_mhs',
     ];
@@ -21,5 +22,9 @@ class PenelitianMahasiswa extends Model
     public function penelitian()
     {
         return $this->belongsTo(Penelitian::class, 'id_penelitian');
+    }
+    public function mahasiswa()
+    {
+        return $this->belongsTo(DataMahasiswa::class, 'id_mahasiswa');
     }
 }

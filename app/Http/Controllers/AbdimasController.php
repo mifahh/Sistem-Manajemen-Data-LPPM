@@ -27,9 +27,13 @@ class AbdimasController extends Controller
     {
         // Update id_dosen for all abdimas based on nama_ketua
         $this->updateIdDosenFromNama();
+        // Update id_mahasiswa for all abdimas based on nama_mhs
+        $this->updateIdMahasiswaFromNama();
 
         $query = Abdimas::with(['members', 'additionalFields', 'mahasiswa', 'luaran'])
             ->whereNull('deleted_at');
+        $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : Abdimas::max('tahun_pelaksanaan');
+
 
         // Add filter only if tahun parameter provided
         $query->when(
@@ -52,6 +56,7 @@ class AbdimasController extends Controller
             'abdimas' => $transformedData,
             'jurusan' => $jurusan,
             'tahun_filter' => $tahun_filter,
+            'selected_tahun' => $selected_tahun,
             'tahun' => $tahun,
             'jml_abdimas' => $jml_abdimas
         ]);
@@ -95,6 +100,29 @@ class AbdimasController extends Controller
             Log::info('Successfully updated id_dosen for abdimas');
         } catch (\Exception $e) {
             Log::error('Error updating id_dosen: ' . $e->getMessage());
+        }
+    }
+
+    private function updateIdMahasiswaFromNama()
+    {
+        try {
+            // Update abdimas mahasiswa
+            $mahasiswaData = DB::table('abdimas_mahasiswa')->get();
+
+            foreach ($mahasiswaData as $m) {
+                if (!empty($m->nama_mhs)) {
+                    $mahasiswa = DB::table('data_mahasiswa')->where('nama_mahasiswa', $m->nama_mhs)->first();
+                    if ($mahasiswa) {
+                        DB::table('abdimas_mahasiswa')
+                            ->where('id', $m->id)
+                            ->update(['id_mahasiswa' => $mahasiswa->id_mahasiswa]);
+                    }
+                }
+            }
+
+            Log::info('Successfully updated id_mahasiswa for abdimas');
+        } catch (\Exception $e) {
+            Log::error('Error updating id_mahasiswa: ' . $e->getMessage());
         }
     }
 
@@ -199,12 +227,11 @@ class AbdimasController extends Controller
     {
         $messages = [
             'required' => ':attribute wajib diisi, tidak boleh kosong',
-            'unique' => ':attribute sudah ada',
         ];
 
         $request->validate([
             'id' => 'required|exists:abdimas_main,id',
-            'judul_penelitian' => 'required|string|unique:abdimas_main,judul_penelitian',
+            'judul_penelitian' => 'required|string',
             'nama_skema' => 'required|string',
             'tahun_usulan' => 'required|integer',
             'dana_diusulkan' => 'nullable|integer',

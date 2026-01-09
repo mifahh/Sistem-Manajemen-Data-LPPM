@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('data_ki_anggota', function (Blueprint $table) {
             $table->id();
             $table->foreignId('id_ki')->constrained('data_ki')->cascadeOnDelete();
+            $table->foreignId('id_mahasiswa')->nullable()->constrained('data_mahasiswa');
             $table->foreignId('id_dosen')->nullable()->constrained('data_dosen');
             $table->string('anggota')->nullable();
             $table->string('status_anggota')->nullable();

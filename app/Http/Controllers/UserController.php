@@ -37,7 +37,6 @@ class UserController extends Controller
 
         $this->validate($request, [
             'id' => 'required|numeric|unique:users',
-            'name' => 'required|string|min:4',
             'email' => 'required|string|min:4|email:dns|unique:users',
             'password' => 'required|string|confirmed|min:6',
             'no_hp' => 'required|numeric|regex:/^08[0-9]{8,12}$/',
@@ -46,15 +45,16 @@ class UserController extends Controller
         try{
             $user = new \App\Models\User();
             $user->id = $request->id;
-            $user->name = $request->name;
             $user->email = $request->email;
             $user->password = bcrypt($request->password);
             $user->no_hp = $request->no_hp;
 
             if ($isStaff) {
                 $user->aktor_id = '1';
+                $user->name = DataStaff::where('nip', $id_login)->value('nama_staff');
             } else if($isDosen){
                 $user->aktor_id = '2';
+                $user->name = DataDosen::where('nip', $id_login)->value('nama_dosen');
             } else {
                 return redirect(route('daftarakun'))->with('alert-danger', 'Registrasi gagal: ID tidak terdaftar sebagai Staff atau Dosen.');
             }

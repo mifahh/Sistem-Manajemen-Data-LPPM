@@ -14,6 +14,7 @@ class KIAnggota extends Model
 
     protected $fillable = [
         'id_ki',
+        'id_mahasiswa',
         'id_dosen',
         'anggota',
         'status_anggota',
@@ -28,5 +29,9 @@ class KIAnggota extends Model
     public function dosen()
     {
         return $this->belongsTo(DataDosen::class, 'id_dosen');
+    }
+    public function mahasiswa()
+    {
+        return $this->belongsTo(DataMahasiswa::class, 'id_mahasiswa');
     }
 }

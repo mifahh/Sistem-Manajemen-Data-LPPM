@@ -33,9 +33,12 @@ class PenelitianController extends Controller
     {
         // Update id_dosen for all penelitian based on nama_ketua
         $this->updateIdDosenFromNama();
+        // Update id_mahasiswa for all penelitian_mahasiswa based on nama_mhs
+        $this->updateIdMahasiswaFromNama();
 
         $query = Penelitian::with(['members', 'additionalFields', 'mahasiswa', 'luaran'])
             ->whereNull('deleted_at');
+        $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : Penelitian::max('tahun_pelaksanaan');
 
         // Add filter only if tahun parameter provided
         $query->when(
@@ -59,6 +62,7 @@ class PenelitianController extends Controller
             'penelitian' => $transformedData,
             'jurusan' => $jurusan,
             'tahun_filter' => $tahun_filter,
+            'selected_tahun' => $selected_tahun,
             'tahun' => $tahun,
             'jml_penelitian' => $jml_penelitian
         ]);
@@ -102,6 +106,29 @@ class PenelitianController extends Controller
             Log::info('Successfully updated id_dosen for penelitian');
         } catch (\Exception $e) {
             Log::error('Error updating id_dosen: ' . $e->getMessage());
+        }
+    }
+
+    private function updateIdMahasiswaFromNama()
+    {
+        try {
+            // Update penelitian mahasiswa
+            $mahasiswas = DB::table('penelitian_mahasiswa')->get();
+
+            foreach ($mahasiswas as $m) {
+                if (!empty($m->nama_mhs)) {
+                    $mahasiswa = getIdMahasiswaByNama($m->nama_mhs);
+                    if ($mahasiswa) {
+                        DB::table('penelitian_mahasiswa')
+                            ->where('id', $m->id)
+                            ->update(['id_mahasiswa' => $mahasiswa->id_mahasiswa]);
+                    }
+                }
+            }
+
+            Log::info('Successfully updated id_mahasiswa for penelitian_mahasiswa');
+        } catch (\Exception $e) {
+            Log::error('Error updating id_mahasiswa: ' . $e->getMessage());
         }
     }
 
@@ -202,11 +229,10 @@ class PenelitianController extends Controller
     {
         $messages = [
             'required' => ':attribute wajib diisi, tidak boleh kosong',
-            'unique' => ':attribute sudah ada',
         ];
         $request->validate([
             'id' => 'required|exists:penelitian_main,id',
-            'judul_penelitian' => 'required|string|unique:penelitian_main,judul_penelitian',
+            'judul_penelitian' => 'required|string',
             'nama_skema' => 'required|string',
             'tahun_usulan' => 'required|integer',
             'dana_disetujui' => 'required|integer',

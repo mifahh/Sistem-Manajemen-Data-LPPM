@@ -26,7 +26,6 @@ class DatabaseSeeder extends Seeder
         // ]);
 
         $this->call([
-            AccountSeeder::class,
             MasterJurusanSeeder::class,
             MasterTahunSeeder::class,
             MasterCoESeeder::class,
