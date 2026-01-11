@@ -68,8 +68,8 @@
                                             <label for="tahun_filter">Tahun Pelaksanaan</label>
                                             <select name="tahun_filter" id="tahun_filter" class="form-select" required
                                                 onchange="this.form.submit()">
-                                                @foreach ($tahun_filter as $item)
-                                                    <option value="{{ $item }}" {{ ($selected_tahun == $item) ? 'selected' : '' }}>{{ $item }}</option>
+                                                @foreach ($tahun as $item)
+                                                    <option value="{{ $item->tahun }}" {{ ($selected_tahun ?? request('tahun_filter')) == $item->tahun ? 'selected' : '' }}>{{ $item->tahun }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -110,17 +110,17 @@
                                             @endif
                                         </tr>
                                     </x-slot>
-                                    @foreach ($penelitian as $index => $item)
+                                    @forelse ($penelitian as $index => $item)
                                         <tr>
-                                            @if($item['no_sk'] != null && filter_var($item['link_sk'], FILTER_VALIDATE_URL))
+                                            @if(filter_var($item['link_sk'], FILTER_VALIDATE_URL))
                                                 <td><a href="{{ $item['link_sk'] }}" target="_blank"
-                                                        rel="noopener noreferrer">{{ $item['no_sk'] }}</a></td>
+                                                        rel="noopener noreferrer">{{ $item['no_sk'] ?? $item['link_sk']}}</a></td>
                                             @else
                                                 <td>{{ $item['no_sk'] ?? '-' }}</td>
                                             @endif
-                                            @if($item['no_kontrak'] != null && filter_var($item['link_kontrak'], FILTER_VALIDATE_URL))
+                                            @if(filter_var($item['link_kontrak'], FILTER_VALIDATE_URL))
                                                 <td><a href="{{ $item['link_kontrak'] }}" target="_blank"
-                                                        rel="noopener noreferrer">{{ $item['no_kontrak'] }}</a></td>
+                                                        rel="noopener noreferrer">{{ $item['no_kontrak'] ?? $item['link_kontrak']}}</a></td>
                                             @else
                                                 <td>{{ $item['no_kontrak'] ?? '-' }}</td>
                                             @endif
@@ -191,7 +191,11 @@
                                                 </td>
                                             @endif
                                         </tr>
-                                    @endforeach
+                                    @empty
+                                        <tr>
+                                            <td colspan="24" class="text-center">No data available in table</td>
+                                        </tr>
+                                    @endforelse
                                 </x-table.datatable-wrapper>
                                 <br>
                             </div>
@@ -407,14 +411,6 @@
                                         <div class="form-group mb-2">
                                             <input id="namaMhs{{ $i }}" type="text" class="form-control" name="nama_mhs{{ $i }}"
                                                 placeholder="Nama Mahasiswa">
-                                        </div>
-                                        <div class="form-group mb-2">
-                                            <select name="prodi_mhs{{ $i }}" id="prodi_mhs{{ $i }}_create" class="form-select">
-                                                <option value="">Pilih Prodi</option>
-                                                @foreach ($jurusan as $jrs)
-                                                    <option value="{{ $jrs->nama_jurusan }}">{{ $jrs->nama_jurusan }}</option>
-                                                @endforeach
-                                            </select>
                                         </div>
                                     </fieldset>
                                 </div>
@@ -677,18 +673,6 @@
                                         <div class="form-group mb-2">
                                             <input type="text" class="form-control" id="nama_mhs{{ $i }}" name="nama_mhs{{ $i }}"
                                                 value="{{ $item['nama_mhs' . $i]  ? $item['nama_mhs' . $i] : '' }}" placeholder="Nama Mahasiswa">
-                                        </div>
-                                        <div class="form-group mb-2">
-                                            <select name="prodi_mhs{{ $i }}" id="prodi_mhs{{ $i }}_edit" class="form-select">
-                                                @if(empty($item['prodi_mhs' . $i]))
-                                                    <option value="">Pilih Prodi</option>
-                                                @else
-                                                    <option value="{{ $item['prodi_mhs' . $i] }}">{{ $item['prodi_mhs' . $i] }}</option>
-                                                @endif
-                                                @foreach ($jurusan as $j)
-                                                    <option value="{{ $j->nama_jurusan }}" {{ ($item['prodi_mhs' . $i] == $j->nama_jurusan) ? 'selected' : '' }}>{{ $j->nama_jurusan }}</option>
-                                                @endforeach
-                                            </select>
                                         </div>
                                     </fieldset>
                                 </div>

@@ -18,7 +18,6 @@ class KIAnggota extends Model
         'id_dosen',
         'anggota',
         'status_anggota',
-        'prodi',
     ];
 
     public function dataKi()

@@ -17,7 +17,6 @@ return new class extends Migration
             $table->foreignId('id_mahasiswa')->nullable()->constrained('data_mahasiswa');
             $table->foreignId('id_dosen')->nullable()->constrained('data_dosen');
             $table->string('nama_penulis')->nullable();
-            $table->string('prodi')->nullable();
             $table->string('status')->nullable();
             $table->string('afiliasi')->nullable();
             $table->timestamps();

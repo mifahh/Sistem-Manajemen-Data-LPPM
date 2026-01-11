@@ -13,14 +13,14 @@ return new class extends Migration
     {
         Schema::create('data_publikasi', function (Blueprint $table) {
             $table->id();
-            $table->text('judul_publikasi');
+            $table->text('judul_publikasi')->unique();
             $table->string('nama_jurnal')->nullable();
             $table->string('akreditasi_index_jurnal')->nullable();
             $table->string('lembaga_pengindeks')->nullable();
             $table->integer('tahun_published')->nullable();
             $table->foreignId('id_dosen')->nullable()->constrained('data_dosen');
+            $table->foreignId('id_mahasiswa')->nullable()->constrained('data_mahasiswa');
             $table->string('nama_penulis_koresponding')->nullable();
-            $table->string('prodi')->nullable();
             $table->string('status')->nullable();
             $table->string('afiliasi')->nullable();
             $table->text('doi')->nullable();

@@ -16,7 +16,6 @@ class PublikasiPenulis extends Model
         'id_mahasiswa',
         'id_dosen',
         'nama_penulis',
-        'prodi',
         'status',
         'afiliasi',
     ];

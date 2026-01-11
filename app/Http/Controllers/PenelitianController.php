@@ -24,8 +24,7 @@ class PenelitianController extends Controller
 
     public function plt_profil_penelitian()
     {
-        return view('penelitian.profil_penelitian.profil_penelitian', [
-        ]);
+        return view('penelitian.profil_penelitian.profil_penelitian', []);
     }
 
     // CRUD untuk tabel penelitian baru
@@ -38,30 +37,24 @@ class PenelitianController extends Controller
 
         $query = Penelitian::with(['members', 'additionalFields', 'mahasiswa', 'luaran'])
             ->whereNull('deleted_at');
+
         $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : Penelitian::max('tahun_pelaksanaan');
 
-        // Add filter only if tahun parameter provided
-        $query->when(
-            $request->filled('tahun_filter') && $request->tahun_filter !== '',
-            fn ($q) => $q->where('tahun_pelaksanaan', $request->tahun_filter),
-            fn ($q) => $q->where('tahun_pelaksanaan', Penelitian::max('tahun_pelaksanaan'))
-        );
+        $query->where('tahun_pelaksanaan', $selected_tahun);
 
         $penelitian = $query->get();
-        $tahun_filter = Penelitian::select('tahun_pelaksanaan')->distinct()->orderBy('tahun_pelaksanaan', 'desc')->pluck('tahun_pelaksanaan');
-        $tahun = \App\Models\MasterTahun::all();
+        $tahun = \App\Models\MasterTahun::all()->sortByDesc('tahun');
         $jurusan = \App\Models\MasterJurusan::all();
         $jml_penelitian = $penelitian->count();
 
         // Transform data to flattened format for view
-        $transformedData = $penelitian->map(function($item) {
+        $transformedData = $penelitian->map(function ($item) {
             return $item->getCompleteData();
         });
 
         return view('penelitian.data_penelitian_table', [
             'penelitian' => $transformedData,
             'jurusan' => $jurusan,
-            'tahun_filter' => $tahun_filter,
             'selected_tahun' => $selected_tahun,
             'tahun' => $tahun,
             'jml_penelitian' => $jml_penelitian
@@ -140,7 +133,7 @@ class PenelitianController extends Controller
         ];
 
         $request->validate([
-            'judul_penelitian' => 'required|string|unique:penelitian_main,judul_penelitian',
+            'judul_penelitian' => 'required|string',
             'nama_skema' => 'required|string',
             'tahun_usulan' => 'required|integer',
             'dana_disetujui' => 'required|integer',
@@ -152,6 +145,11 @@ class PenelitianController extends Controller
 
         DB::beginTransaction();
         try {
+            $existing = Penelitian::withTrashed()->where('judul_penelitian', $request->judul_penelitian)->first();
+            if ($existing && !is_null($existing->deleted_at)) {
+                $existing->restore();
+            }
+
             // Create main penelitian record
             $penelitian = Penelitian::updateOrCreate([
                 'judul_penelitian' => $request->judul_penelitian,
@@ -179,15 +177,31 @@ class PenelitianController extends Controller
 
             // Create members
             for ($i = 1; $i <= 8; $i++) {
+                $all = PenelitianMember::where('id_penelitian', $penelitian->id)->get();
+                $existing = $all[$i - 1] ?? null;
+
                 if (!empty($request->input('nama_member' . $i))) {
-                    PenelitianMember::updateOrCreate([
-                        'id_penelitian' => $penelitian->id,
-                        'nama_member' => $request->input('nama_member' . $i),
-                    ], [
-                        'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
-                        'dana_member' => $request->input('dana_member' . $i) ?? 0,
-                        'pt' => $request->input('pt' . $i),
-                    ]);
+                    if ($existing && is_null($existing->deleted_at)) {
+                        // Update existing
+                        $existing->update([
+                            'id_penelitian' => $penelitian->id,
+                            'nama_member' => $request->input('nama_member' . $i),
+                            'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
+                            'dana_member' => $request->input('dana_member' . $i) ?? 0,
+                            'pt' => $request->input('pt' . $i),
+                        ]);
+                    } else {
+                        PenelitianMember::create([
+                            'id_penelitian' => $penelitian->id,
+                            'nama_member' => $request->input('nama_member' . $i),
+                            'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
+                            'dana_member' => $request->input('dana_member' . $i) ?? 0,
+                            'pt' => $request->input('pt' . $i),
+                        ]);
+                    }
+                } else if ($existing && is_null($existing->deleted_at)) {
+                    // Jika input kosong tapi data existing ada, hapus data existing
+                    $existing->delete();
                 }
             }
 
@@ -202,14 +216,27 @@ class PenelitianController extends Controller
 
             // Create mahasiswa records
             for ($i = 1; $i <= 8; $i++) {
+                $all = PenelitianMahasiswa::where('id_penelitian', $penelitian->id)->get();
+                $existing = $all[$i - 1] ?? null;
+
                 if (!empty($request->input('nama_mhs' . $i))) {
-                    PenelitianMahasiswa::updateOrCreate([
-                        'id_penelitian' => $penelitian->id,
-                        'nama_mhs' => $request->input('nama_mhs' . $i),
-                    ], [
-                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
-                        'prodi_mhs' => $request->input('prodi_mhs' . $i),
-                    ]);
+                    if ($existing && is_null($existing->deleted_at)) {
+                        // Update existing
+                        $existing->update([
+                            'id_penelitian' => $penelitian->id,
+                            'nama_mhs' => $request->input('nama_mhs' . $i),
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
+                        ]);
+                    } else {
+                        PenelitianMahasiswa::create([
+                            'id_penelitian' => $penelitian->id,
+                            'nama_mhs' => $request->input('nama_mhs' . $i),
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
+                        ]);
+                    }
+                } else if ($existing && is_null($existing->deleted_at)) {
+                    // Jika input kosong tapi data existing ada, hapus data existing
+                    $existing->delete();
                 }
             }
 
@@ -309,7 +336,6 @@ class PenelitianController extends Controller
                         'id_penelitian' => $penelitian->id,
                         'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'nama_mhs' => $request->input('nama_mhs' . $i),
-                        'prodi_mhs' => $request->input('prodi_mhs' . $i),
                     ]);
                 }
             }
@@ -367,12 +393,51 @@ class PenelitianController extends Controller
             $headers = array_shift($rows);
             // Expected headers yang wajib ada
             $expectedHeaders = [
+                //Main Abdimas
                 'Judul Penelitian',
-                'No. SK', 'No. Kontrak', 'Nama Skema', 'Tahun Usulan', 'Tahun Pelaksanaan Kegiatan',
-                'Lama Kegiatan (bulan)', 'Bidang Fokus', 'Dana Disetujui', 'Target TKT',
-                'Nama Program Hibah', 'Kategori Sumber Dana', 'Negara Sumber Dana', 'Sumber Dana',
-                'Nama Ketua', 'DANA KETUA', 'PT'
+                'No. SK',
+                'No. Kontrak',
+                'Nama Skema',
+                'Tahun Usulan',
+                'Tahun Pelaksanaan Kegiatan',
+                'Lama Kegiatan (bulan)',
+                'Bidang Fokus',
+                'Dana Disetujui',
+                'Target TKT',
+                'Nama Program Hibah',
+                'Kategori Sumber Dana',
+                'Negara Sumber Dana',
+                'Sumber Dana',
+                'Nama Ketua',
+                'DANA KETUA',
+                'PT',
+                //Additional Fields
+                'SDG Pertama',
+                'SDG Kedua',
+                'SDG Ketiga',
+                'SDG Keempat',
+                'SDG Kelima',
+                'SDG Keenam',
+                'SDG Ketujuh',
+                'Proposal',
+                'Laporan Akhir',
+                //Luaran
+                'Luaran Wajib',
+                'Capaian Luaran Wajib',
+                'Luaran Tambahan',
+                'Capaian Luaran Tambahan'
             ];
+
+            // // Members dan Mahasiswa
+            // for ($i = 1; $i <= 5; $i++) {
+            //     $expectedHeaders[] = 'Nama Member' . $i;
+            //     $expectedHeaders[] = 'DANA MEMBER' . $i;
+            //     $expectedHeaders[] = 'PT' . $i;
+            // }
+
+            // for ($i = 1; $i <= 5; $i++) {
+            //     $expectedHeaders[] = 'Nama Mhs' . $i;
+            // }
 
             // Validasi header
             foreach ($expectedHeaders as $header) {
@@ -386,7 +451,7 @@ class PenelitianController extends Controller
             }
 
             // Create a helper function to find column index with flexible matching
-            $findColumn = function($searchTerms) use ($headers) {
+            $findColumn = function ($searchTerms) use ($headers) {
                 $searchTerms = (array)$searchTerms;
                 foreach ($searchTerms as $term) {
                     $index = array_search($term, $headers, true);
@@ -401,7 +466,7 @@ class PenelitianController extends Controller
                 if (empty(array_filter($row))) continue; // Skip empty rows
 
                 // Helper function to get hyperlink value if exists
-                $getHyperlink = function($colIndex) use ($hyperlinks, $rowIndex) {
+                $getHyperlink = function ($colIndex) use ($hyperlinks, $rowIndex) {
                     if ($colIndex === false) return null;
                     $cellCoordinate = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1) . ($rowIndex + 2);
                     if (isset($hyperlinks[$cellCoordinate])) {
@@ -411,7 +476,7 @@ class PenelitianController extends Controller
                 };
 
                 // Helper to safely get value from rowData by column index
-                $getValue = function($headers, $row, $colIndex, $default = null) {
+                $getValue = function ($headers, $row, $colIndex, $default = null) {
                     if ($colIndex === false || $colIndex >= count($row)) return $default;
                     return $row[$colIndex] ?? $default;
                 };
@@ -425,9 +490,9 @@ class PenelitianController extends Controller
                     continue;
                 }
 
-                if (Penelitian::where('judul_penelitian', $judul_penelitian)->exists()) {
-                    Log::warning("Skip row " . ($rowIndex + 2) . ": Judul Penelitian '$judul_penelitian' already exists");
-                    continue;
+                $existing = Penelitian::withTrashed()->where('judul_penelitian', $judul_penelitian)->first();
+                if ($existing && !is_null($existing->deleted_at)) {
+                    $existing->restore();
                 }
 
                 // Try to map all possible column variations
@@ -477,15 +542,31 @@ class PenelitianController extends Controller
                 for ($i = 1; $i <= 8; $i++) {
                     $namaMemIndex = $findColumn(['Nama Member' . $i, 'Member' . $i, 'nama_member' . $i]);
                     $namaMem = $getValue($headers, $row, $namaMemIndex);
+
+                    $all = PenelitianMember::withTrashed()->where('id_penelitian', $penelitian->id)->get();
+                    $existing = $all[$i - 1] ?? null;
                     if (!empty($namaMem)) {
-                        PenelitianMember::updateOrCreate([
-                            'id_penelitian' => $penelitian->id,
-                            'nama_member' => $namaMem,
-                        ], [
-                            'id_dosen' => $this->getIdDosenByNama($namaMem),
-                            'dana_member' => parseDana($getValue($headers, $row, $findColumn(['Dana Member' . $i, 'DANA MEMBER' . $i, 'dana_member' . $i]))) ?? 0,
-                            'pt' => $getValue($headers, $row, $findColumn(['PT Member' . $i, 'PT' . $i, 'pt' . $i])),
-                        ]);
+                        if ($existing && is_null($existing->deleted_at)) {
+                            // Update existing
+                            $existing->update([
+                                'id_penelitian' => $penelitian->id,
+                                'nama_member' => $namaMem,
+                                'id_dosen' => $this->getIdDosenByNama($namaMem),
+                                'dana_member' => parseDana($getValue($headers, $row, $findColumn(['Dana Member' . $i, 'DANA MEMBER' . $i, 'dana_member' . $i]))) ?? 0,
+                                'pt' => $getValue($headers, $row, $findColumn(['PT Member' . $i, 'PT' . $i, 'pt' . $i])),
+                            ]);
+                        } else {
+                            PenelitianMember::create([
+                                'id_penelitian' => $penelitian->id,
+                                'nama_member' => $namaMem,
+                                'id_dosen' => $this->getIdDosenByNama($namaMem),
+                                'dana_member' => parseDana($getValue($headers, $row, $findColumn(['Dana Member' . $i, 'DANA MEMBER' . $i, 'dana_member' . $i]))) ?? 0,
+                                'pt' => $getValue($headers, $row, $findColumn(['PT Member' . $i, 'PT' . $i, 'pt' . $i])),
+                            ]);
+                        }
+                    } else if ($existing && is_null($existing->deleted_at)) {
+                        // Jika input kosong tapi data existing ada, hapus data existing
+                        $existing->delete();
                     }
                 }
 
@@ -510,14 +591,27 @@ class PenelitianController extends Controller
                 for ($i = 1; $i <= 8; $i++) {
                     $namaMhsIndex = $findColumn(['Nama Mhs' . $i, 'Nama Mahasiswa' . $i, 'Mahasiswa' . $i, 'nama_mhs' . $i]);
                     $namaMhs = $getValue($headers, $row, $namaMhsIndex);
+
+                    $all = PenelitianMahasiswa::withTrashed()->where('id_penelitian', $penelitian->id)->get();
+                    $existing = $all[$i - 1] ?? null;
                     if (!empty($namaMhs)) {
-                        PenelitianMahasiswa::updateOrCreate([
-                            'id_penelitian' => $penelitian->id,
-                            'nama_mhs' => $namaMhs,
-                        ], [
-                            'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
-                            'prodi_mhs' => $getValue($headers, $row, $findColumn(['Prodi Mhs' . $i, 'Prodi Mahasiswa' . $i, 'Prodi' . $i, 'prodi_mhs' . $i])),
-                        ]);
+                        if ($existing && is_null($existing->deleted_at)) {
+                            // Update existing
+                            $existing->update([
+                                'id_penelitian' => $penelitian->id,
+                                'nama_mhs' => $namaMhs,
+                                'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
+                            ]);
+                        } else {
+                            PenelitianMahasiswa::create([
+                                'id_penelitian' => $penelitian->id,
+                                'nama_mhs' => $namaMhs,
+                                'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
+                            ]);
+                        }
+                    } else if ($existing && is_null($existing->deleted_at)) {
+                        // Jika input kosong tapi data existing ada, hapus data existing
+                        $existing->delete();
                     }
                 }
 
@@ -540,4 +634,3 @@ class PenelitianController extends Controller
         }
     }
 }
-

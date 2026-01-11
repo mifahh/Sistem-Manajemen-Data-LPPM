@@ -11,23 +11,25 @@
     <!-- Sidebar -->
     <div class="sidebar">
         <!-- Sidebar user panel (optional) -->
-        <div class="m-4">
-            {{-- <div class="image" style="padding-top: 8px;">
+        {{-- <div class="m-4">
+            <div class="image" style="padding-top: 8px;">
                 <img src="{{ asset('lte/dist/img/avatar04.png') }}" class="img-circle elevation-2" alt="User Image">
-            </div> --}}
-            <div class="info">
-                <a href="{{ route('dashboard') }}" class="d-block text-decoration-none">
-                    <i class="fas fa-th-large mr-1"></i>
-                    Dashboard
-                </a>
             </div>
-        </div>
+        </div> --}}
 
 
         <!-- Sidebar Menu -->
         <nav class="mt-2">
-
             <ul class="nav nav-pills nav-sidebar flex-column" data-widget="treeview" role="menu" data-accordion="false">
+                <li class="nav-item has-treeview">
+                    <a href="{{ route('dashboard') }}" class="nav-link">
+                        <i class="nav-icon fas fa-th-large"></i>
+                        <p>
+                            Dashboard
+                        </p>
+                    </a>
+                </li>
+                </br>
                 @if (Auth::user() === null)
                 @else
                     <li class="nav-item has-treeview">
@@ -53,7 +55,6 @@
                         </ul>
                     </li>
                 @endif
-
                 <li class="nav-item has-treeview">
                     <a href="#" class="nav-link">
 
@@ -150,15 +151,15 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('data_ki_table') }}">
-                                <i class="far fa-circle nav-icon"></i>
-                                <p>Kekayaan Intelektual</p>
-                            </a>
-                        </li>
-                        <li class="nav-item">
                             <a class="nav-link" href="{{ route('data_publikasi_table') }}">
                                 <i class="far fa-circle nav-icon"></i>
                                 <p>Publikasi</p>
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('data_ki_table') }}">
+                                <i class="far fa-circle nav-icon"></i>
+                                <p>Kekayaan Intelektual</p>
                             </a>
                         </li>
                     </ul>

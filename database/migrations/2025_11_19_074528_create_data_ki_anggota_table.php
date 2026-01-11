@@ -18,7 +18,6 @@ return new class extends Migration
             $table->foreignId('id_dosen')->nullable()->constrained('data_dosen');
             $table->string('anggota')->nullable();
             $table->string('status_anggota')->nullable();
-            $table->string('prodi')->nullable();
             $table->timestamps();
             $table->softDeletes();
         });

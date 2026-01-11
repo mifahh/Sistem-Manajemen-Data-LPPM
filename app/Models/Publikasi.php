@@ -19,9 +19,9 @@ class Publikasi extends Model
         'akreditasi_index_jurnal',
         'lembaga_pengindeks',
         'tahun_published',
+        'id_mahasiswa',
         'id_dosen',
         'nama_penulis_koresponding',
-        'prodi',
         'status',
         'afiliasi',
         'doi',
@@ -41,17 +41,19 @@ class Publikasi extends Model
             'akreditasi_index_jurnal' => $this->akreditasi_index_jurnal,
             'lembaga_pengindeks' => $this->lembaga_pengindeks,
             'tahun_published' => $this->tahun_published,
+            'id_mahasiswa' => $this->id_mahasiswa,
+            'id_dosen' => $this->id_dosen,
             'nama_penulis_koresponding' => $this->nama_penulis_koresponding,
-            'prodi' => $this->prodi,
             'status' => $this->status,
             'afiliasi' => $this->afiliasi,
             'doi' => $this->doi,
         ];
 
-        foreach ($this->penulis as $index => $penulis) {
-            $i = $index + 1;
+        for ($i = 0; $i < 15; $i++) {
+            $penulis = $this->penulis[$i - 1] ?? null;
+            $data['id_penulis_dosen_' . $i]  = $penulis->id_dosen ?? null;
+            $data['id_penulis_mahasiswa_' . $i]  = $penulis->id_mahasiswa ?? null;
             $data['penulis_' . $i]  = $penulis->nama_penulis ?? null;
-            $data['prodi_' . $i]         = $penulis->prodi ?? null;
             $data['status_' . $i]        = $penulis->status ?? null;
             $data['afiliasi_' . $i]      = $penulis->afiliasi ?? null;
         }

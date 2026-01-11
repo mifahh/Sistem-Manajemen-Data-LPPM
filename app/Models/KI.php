@@ -21,9 +21,9 @@ class KI extends Model
         'prototype',
         'patent_holder',
         'id_dosen',
+        'id_mahasiswa',
         'inventor',
         'jabatan',
-        'prodi',
         'publication_number',
         'publication_link',
         'publication_date',
@@ -67,9 +67,10 @@ class KI extends Model
             'jenis_hki' => $this->jenis_hki,
             'prototype' => $this->prototype,
             'patent_holder' => $this->patent_holder,
+            'id_dosen' => $this->id_dosen,
+            'id_mahasiswa' => $this->id_mahasiswa,
             'inventor' => $this->inventor,
             'jabatan' => $this->jabatan,
-            'prodi' => $this->prodi,
             'publication_number' => $this->publication_number,
             'publication_link' => $this->publication_link,
             'publication_date' => $this->publication_date,
@@ -84,9 +85,10 @@ class KI extends Model
         for ($i = 1; $i <= 12; $i++) {
             $anggota = $this->anggota[$i - 1] ?? null;
 
+            $data['id_anggota_dosen' . $i] = $anggota ? $anggota->id_dosen : null;
+            $data['id_anggota_mahasiswa' . $i] = $anggota ? $anggota->id_mahasiswa : null;
             $data['anggota' . $i] = $anggota ? $anggota->anggota : null;
             $data['status_anggota' . $i] = $anggota ? $anggota->status_anggota : null;
-            $data['prodi' . $i] = $anggota ? $anggota->prodi : null;
         }
 
         return $data;

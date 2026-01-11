@@ -16,7 +16,6 @@ class AbdimasMahasiswa extends Model
         'id_abdimas',
         'id_mahasiswa',
         'nama_mhs',
-        'prodi_mhs',
     ];
 
     public function abdimas()

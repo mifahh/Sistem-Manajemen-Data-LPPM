@@ -16,14 +16,14 @@ return new class extends Migration
             $table->string('application_number')->nullable();
             $table->string('kategori')->nullable();
             $table->string('application_year')->nullable();
-            $table->string('title')->nullable();
+            $table->string('title')->unique();
             $table->string('jenis_hki')->nullable();
             $table->string('prototype')->nullable();
             $table->string('patent_holder')->nullable();
             $table->foreignId('id_dosen')->nullable()->constrained('data_dosen');
+            $table->foreignId('id_mahasiswa')->nullable()->constrained('data_mahasiswa');
             $table->string('inventor')->nullable();
             $table->string('jabatan')->nullable();
-            $table->string('prodi')->nullable();
             $table->string('publication_number')->nullable();
             $table->string('publication_link')->nullable();
             $table->string('publication_date')->nullable();

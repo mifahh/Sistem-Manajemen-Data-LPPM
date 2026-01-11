@@ -67,8 +67,8 @@
                                         <div class="form-group col-md-2">
                                             <label for="tahun_filter">Tahun Published</label>
                                             <select name="tahun_filter" id="tahun_filter" class="form-select" required onchange="this.form.submit()">
-                                                @foreach ($tahun_filter as $item)
-                                                    <option value="{{ $item }}" {{ ($selected_tahun == $item) ? 'selected' : '' }}>{{ $item }}</option>
+                                                @foreach ($tahun as $item)
+                                                    <option value="{{ $item->tahun }}" {{ ($selected_tahun ?? request('tahun_filter')) == $item->tahun ? 'selected' : '' }}>{{ $item->tahun }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -76,7 +76,7 @@
                                             <label for="akreditasi_index_jurnal">Akreditasi/Index Jurnal</label>
                                             <select name="akreditasi_index_jurnal" id="akreditasi_index_jurnal" class="form-select" required onchange="this.form.submit()">
                                                 @foreach ($akreditasi_index_jurnal as $item)
-                                                    <option value="{{ $item }}" {{ ($selected_akreditasi == $item) ? 'selected' : '' }}>{{ $item }}</option>
+                                                    <option value="{{ $item }}" {{ ($selected_akreditasi ?? request('akreditasi_index_jurnal')) == $item ? 'selected' : '' }}>{{ $item }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -94,7 +94,6 @@
                                             <th class="th-sm">Lembaga Pengindeks</th>
                                             <th class="th-sm">Tahun Published</th>
                                             <th class="th-sm">Nama Penulis Koresponding</th>
-                                            <th class="th-sm">Prodi</th>
                                             <th class="th-sm">Status</th>
                                             <th class="th-sm">Afiliasi</th>
                                             <th class="th-sm">Nama Penulis</th>
@@ -112,7 +111,6 @@
                                             <td>{{ $item['lembaga_pengindeks'] ?? '-' }}</td>
                                             <td>{{ $item['tahun_published'] ?? '-' }}</td>
                                             <td>{{ $item['nama_penulis_koresponding'] ?? '-' }}</td>
-                                            <td>{{ $item['prodi'] ?? '-' }}</td>
                                             <td>{{ $item['status'] ?? '-' }}</td>
                                             <td>{{ $item['afiliasi'] ?? '-' }}</td>
                                             <td>
@@ -193,7 +191,7 @@
             <div class="form-group row">
                 <label for="akreditasi_create" class="col-sm-2 col-form-label d-flex align-items-center">Akreditasi/Index</label>
                 <div class="col-sm-5 d-flex align-items-center">
-                    <input type="text" class="form-control" id="akreditasi_create" name="akreditasi_index_jurnal" placeholder="Isikan Akreditasi/Index">
+                    <input type="text" class="form-control" id="akreditasi_create" name="akreditasi_index_jurnal" placeholder="Isikan Akreditasi/Index" required>
                 </div>
                 <label for="lembaga_create" class="col-sm-2 col-form-label d-flex align-items-center">Lembaga Pengindeks</label>
                 <div class="col-sm-3 d-flex align-items-center">
@@ -205,15 +203,6 @@
                 <label for="nama_penulis_create" class="col-sm-2 col-form-label d-flex align-items-center">Nama Penulis Koresponding</label>
                 <div class="col-sm-5 d-flex align-items-center">
                     <input type="text" class="form-control" id="nama_penulis_create" name="nama_penulis_koresponding" placeholder="Isikan Nama Penulis" required>
-                </div>
-                <label for="prodi_create" class="col-sm-2 col-form-label d-flex align-items-center">Prodi</label>
-                <div class="col-sm-3 d-flex align-items-center">
-                    <select name="prodi" id="prodi_create" class="form-select" required>
-                        <option value="">Pilih Prodi</option>
-                        @foreach ($jurusan as $j)
-                            <option value="{{ $j->nama_jurusan }}">{{ $j->nama_jurusan }}</option>
-                        @endforeach
-                    </select>
                 </div>
             </div>
 
@@ -249,14 +238,6 @@
                                 <legend class="w-auto px-2 font-weight-bold">Penulis {{ $i }}</legend>
                                 <div class="form-group mb-2">
                                     <input type="text" class="form-control" id="penulis_{{ $i }}_create" name="penulis_{{ $i }}" placeholder="Nama Penulis {{ $i }}">
-                                </div>
-                                <div class="form-group mb-2">
-                                    <select name="prodi_{{ $i }}" id="prodi_{{ $i }}_create" class="form-select">
-                                        <option value="">Pilih Prodi</option>
-                                        @foreach ($jurusan as $jrs)
-                                            <option value="{{ $jrs->nama_jurusan }}">{{ $jrs->nama_jurusan }}</option>
-                                        @endforeach
-                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <select name="status_{{ $i }}" id="status_{{ $i }}_create" class="form-select">
@@ -331,7 +312,7 @@
                 <div class="form-group row">
                     <label for="akreditasi_edit" class="col-sm-2 col-form-label d-flex align-items-center">Akreditasi/Index</label>
                     <div class="col-sm-5 d-flex align-items-center">
-                        <input type="text" class="form-control" id="akreditasi_edit" name="akreditasi_index_jurnal" value="{{ $item['akreditasi_index_jurnal'] }}">
+                        <input type="text" class="form-control" id="akreditasi_edit" name="akreditasi_index_jurnal" value="{{ $item['akreditasi_index_jurnal'] }}" required>
                     </div>
                     <label for="lembaga_edit" class="col-sm-2 col-form-label d-flex align-items-center">Lembaga Pengindeks</label>
                     <div class="col-sm-3 d-flex align-items-center">
@@ -343,19 +324,6 @@
                     <label for="nama_penulis_edit" class="col-sm-2 col-form-label d-flex align-items-center">Nama Penulis Koresponding</label>
                     <div class="col-sm-5 d-flex align-items-center">
                         <input type="text" class="form-control" id="nama_penulis_edit" name="nama_penulis_koresponding" value="{{ $item['nama_penulis_koresponding'] }}" required>
-                    </div>
-                    <label for="prodi_edit" class="col-sm-2 col-form-label d-flex align-items-center">Prodi</label>
-                    <div class="col-sm-3 d-flex align-items-center">
-                        <select name="prodi" id="prodi_edit" class="form-select" required>
-                            @if(empty($item['prodi']))
-                                <option value="">Pilih Prodi</option>
-                            @else
-                                <option value="{{ $item['prodi'] }}">{{ $item['prodi'] }}</option>
-                            @endif
-                            @foreach ($jurusan as $j)
-                                <option value="{{ $j->nama_jurusan }}" {{ ($item['prodi'] == $j->nama_jurusan) ? 'selected' : '' }}>{{ $j->nama_jurusan }}</option>
-                            @endforeach
-                        </select>
                     </div>
                 </div>
 
@@ -393,18 +361,6 @@
                                     <legend class="w-auto px-2 font-weight-bold">Penulis {{ $i }}</legend>
                                     <div class="form-group mb-2">
                                         <input type="text" class="form-control" id="penulis_{{ $i }}_edit" name="penulis_{{ $i }}" value="{{ $item['penulis_' . $i] ?? '' }}" placeholder="Nama Penulis {{ $i }}">
-                                    </div>
-                                    <div class="form-group mb-2">
-                                        <select name="prodi_{{ $i }}" id="prodi_{{ $i }}_edit" class="form-select">
-                                            @if(empty($item['prodi_' . $i]))
-                                                <option value="">Pilih Prodi</option>
-                                            @else
-                                                <option value="{{ $item['prodi_' . $i] }}">{{ $item['prodi_' . $i] }}</option>
-                                            @endif
-                                            @foreach ($jurusan as $jrs)
-                                                <option value="{{ $jrs->nama_jurusan }}" {{ (isset($item['prodi_' . $i]) && $item['prodi_' . $i] == $jrs->nama_jurusan) ? 'selected' : '' }}>{{ $jrs->nama_jurusan }}</option>
-                                            @endforeach
-                                        </select>
                                     </div>
                                     <div class="form-group">
                                         <select name="status_{{ $i }}" id="status_{{ $i }}_edit" class="form-select">

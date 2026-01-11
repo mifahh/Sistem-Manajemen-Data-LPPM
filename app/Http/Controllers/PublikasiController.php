@@ -29,26 +29,16 @@ class PublikasiController extends Controller
         $query = Publikasi::with('penulis')->whereNull('deleted_at');
         $this->updateIdFromNama();
 
-        $query->when(
-            $request->filled('tahun_filter') && $request->tahun_filter !== '',
-            fn($q) => $q->where('tahun_published', $request->tahun_filter),
-            fn($q) => $q->where('tahun_published', Publikasi::max('tahun_published'))
-        );
-
-        $query->when(
-            $request->filled('akreditasi_index_jurnal') && $request->akreditasi_index_jurnal != '',
-            fn($q) => $q->where('akreditasi_index_jurnal', $request->akreditasi_index_jurnal),
-            fn($q) => $q->where('akreditasi_index_jurnal', '-')
-        );
-
+        $akreditasi_index_jurnal = Publikasi::select('akreditasi_index_jurnal')->distinct()->orderBy('akreditasi_index_jurnal')->pluck('akreditasi_index_jurnal');
         $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : Publikasi::max('tahun_published');
-        $selected_akreditasi = ($request->has('akreditasi_index_jurnal') && $request->akreditasi_index_jurnal != '') ? $request->akreditasi_index_jurnal : '-';
+        $selected_akreditasi = ($request->has('akreditasi_index_jurnal') && $request->akreditasi_index_jurnal != '') ? $request->akreditasi_index_jurnal : $akreditasi_index_jurnal->first();
+
+        $query->where('tahun_published', $selected_tahun);
+        $query->where('akreditasi_index_jurnal', $selected_akreditasi);
 
         $data_publikasi = $query->get();
-        $tahun_filter = Publikasi::select('tahun_published')->distinct()->orderBy('tahun_published', 'desc')->pluck('tahun_published');
-        $tahun = \App\Models\MasterTahun::all();
+        $tahun = \App\Models\MasterTahun::all()->sortByDesc('tahun');
         $jurusan = \App\Models\MasterJurusan::all();
-        $akreditasi_index_jurnal = Publikasi::select('akreditasi_index_jurnal')->distinct()->orderBy('akreditasi_index_jurnal')->pluck('akreditasi_index_jurnal');
         $jml_publikasi = $data_publikasi->count();
 
         // Transform data to flattened array format
@@ -61,7 +51,6 @@ class PublikasiController extends Controller
         return view('publikasi.data_publikasi_table', [
             'publikasi' => $transformedData,
             'tahun' => $tahun,
-            'tahun_filter' => $tahun_filter,
             'selected_tahun' => $selected_tahun,
             'selected_akreditasi' => $selected_akreditasi,
             'jurusan' => $jurusan,
@@ -104,47 +93,63 @@ class PublikasiController extends Controller
         ];
 
         $request->validate([
-            'judul_publikasi' => 'required|string|unique:data_publikasi,judul_publikasi',
+            'judul_publikasi' => 'required|string',
             'nama_jurnal' => 'required|string',
             'tahun_published' => 'required|integer',
             'nama_penulis_koresponding' => 'required|string',
-            'prodi' => 'required|string',
+            'akreditasi_index_jurnal' => 'required|string',
         ], $messages);
 
         DB::beginTransaction();
         try {
+            $existing = Publikasi::withTrashed()->where('judul_publikasi', $request->judul_publikasi)->first();
+            if ($existing && !is_null($existing->deleted_at)) {
+                $existing->restore();
+            }
+
             $publikasi = Publikasi::updateOrCreate(
                 [
                     'judul_publikasi' => $request->judul_publikasi,
-                ],
-                [
+                ],[
                     'nama_jurnal' => $request->nama_jurnal,
                     'akreditasi_index_jurnal' => $request->akreditasi_index_jurnal,
                     'lembaga_pengindeks' => $request->lembaga_pengindeks,
                     'tahun_published' => $request->tahun_published,
                     'nama_penulis_koresponding' => $request->nama_penulis_koresponding,
-                    'prodi' => $request->prodi,
                     'status' => $request->status,
                     'afiliasi' => $request->afiliasi,
                     'doi' => $request->doi,
                 ]
             );
 
-            for ($i = 1; $i <= 7; $i++) {
-                if ($i == 7) {
-                    $i = 'lain';
-                }
+            for ($i = 1; $i <= 15; $i++) {
+                $all = PublikasiPenulis::where('id_publikasi', $publikasi->id)->get();
+                $existing = $all[$i - 1] ?? null;
+
                 if ($request->input('penulis_' . $i)) {
-                    PublikasiPenulis::updateOrCreate([
-                        'id_publikasi' => $publikasi->id,
-                        'nama_penulis' => $request->input('penulis_' . $i),
-                    ], [
-                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('penulis_' . $i)),
-                        'id_dosen' => $this->getIdDosenByNama($request->input('penulis_' . $i)),
-                        'prodi' => $request->input('prodi_' . $i),
-                        'status' => $request->input('status_' . $i),
-                        'afiliasi' => $request->input('afiliasi_' . $i),
-                    ]);
+                    if ($existing && is_null($existing->deleted_at)) {
+                        // Update existing
+                        $existing->update([
+                            'id_publikasi' => $publikasi->id,
+                            'nama_penulis' => $request->input('penulis_' . $i),
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('penulis_' . $i)),
+                            'id_dosen' => $this->getIdDosenByNama($request->input('penulis_' . $i)),
+                            'status' => $request->input('status_' . $i),
+                            'afiliasi' => $request->input('afiliasi_' . $i),
+                        ]);
+                    } else {
+                        PublikasiPenulis::create([
+                            'id_publikasi' => $publikasi->id,
+                            'nama_penulis' => $request->input('penulis_' . $i),
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('penulis_' . $i)),
+                            'id_dosen' => $this->getIdDosenByNama($request->input('penulis_' . $i)),
+                            'status' => $request->input('status_' . $i),
+                            'afiliasi' => $request->input('afiliasi_' . $i),
+                        ]);
+                    }
+                } else if ($existing && is_null($existing->deleted_at)) {
+                    // Jika input kosong tapi data existing ada, hapus data existing
+                    $existing->delete();
                 }
             }
 
@@ -168,7 +173,6 @@ class PublikasiController extends Controller
             'nama_jurnal' => 'required|string',
             'tahun_published' => 'required|integer',
             'nama_penulis_koresponding' => 'required|string',
-            'prodi' => 'required|string',
         ], $messages);
 
         DB::beginTransaction();
@@ -182,7 +186,6 @@ class PublikasiController extends Controller
                 'lembaga_pengindeks' => $request->lembaga_pengindeks,
                 'tahun_published' => $request->tahun_published,
                 'nama_penulis_koresponding' => $request->nama_penulis_koresponding,
-                'prodi' => $request->prodi,
                 'status' => $request->status,
                 'afiliasi' => $request->afiliasi,
                 'doi' => $request->doi,
@@ -197,7 +200,6 @@ class PublikasiController extends Controller
                         'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('penulis_' . $i)),
                         'id_dosen' => $this->getIdDosenByNama($request->input('penulis_' . $i)),
                         'nama_penulis' => $request->input('penulis_' . $i),
-                        'prodi' => $request->input('prodi_' . $i),
                         'status' => $request->input('status_' . $i),
                         'afiliasi' => $request->input('afiliasi_' . $i),
                     ]);
@@ -252,11 +254,16 @@ class PublikasiController extends Controller
                 'Lembaga Pengindeks',
                 'Tahun Published',
                 'Nama Penulis Koresponding',
-                'Prodi',
                 'Status',
                 'Afiliasi',
                 'DOI'
             ];
+
+            // for ($i = 1; $i <= 7; $i++) {
+            //     $expectedHeaders[] = 'Nama Penulis' . $i;
+            //     $expectedHeaders[] = 'Status' . $i;
+            //     $expectedHeaders[] = 'Afiliasi' . $i;
+            // }
 
             // Validasi header
             foreach ($expectedHeaders as $header) {
@@ -289,6 +296,11 @@ class PublikasiController extends Controller
                     continue;
                 }
 
+                $existing = Publikasi::withTrashed()->where('judul_publikasi', $rowData['Judul Publikasi'] ?? null)->first();
+                if ($existing && !is_null($existing->deleted_at)) {
+                    $existing->restore();
+                }
+
                 // Create main KI data
                 $dataPublikasi = Publikasi::updateOrCreate([
                     'judul_publikasi' => $rowData['Judul Publikasi'] ?? null,
@@ -299,50 +311,45 @@ class PublikasiController extends Controller
                     'tahun_published' => $rowData['Tahun Published'] ?? null,
                     'id_dosen' => getIdDosenByNama($rowData['Nama Penulis Koresponding'] ?? null),
                     'nama_penulis_koresponding' => $rowData['Nama Penulis Koresponding'] ?? null,
-                    'prodi' => getProdiDosenById(getIdDosenByNama($rowData['Nama Penulis Koresponding'] ?? null)) ?? getProdiMahasiswaById(getIdMahasiswaByNama($rowData['Nama Penulis Koresponding'] ?? null)) ?? null,
                     'status' => $rowData['Status'] ?? null,
                     'afiliasi' => $rowData['Afiliasi'] ?? null,
                     'doi' => $getHyperlink(array_search('DOI', $headers)) ?? $rowData['DOI'] ?? null,
                 ]);
 
                 // Create anggota data
-                for ($i = 1; $i <= 6; $i++) {
-                    $namaPenulis = trim($rowData['Nama Penulis' . $i] ?? '');
-                    // Skip jika kosong atau hanya berisi dash/placeholder
-                    if (!empty($namaPenulis) && $namaPenulis !== '-') {
-                        PublikasiPenulis::updateOrCreate(
-                            [
-                                'id_publikasi' => $dataPublikasi->id,
-                                'nama_penulis' => $namaPenulis
-                            ],
-                            [
-                                'id_mahasiswa' => getIdMahasiswaByNama($namaPenulis),
-                                'id_dosen' => getIdDosenByNama($namaPenulis),
-                                'prodi' => $rowData['Prodi' . $i] ?? getProdiDosenById(getIdDosenByNama($namaPenulis)) ?? getProdiMahasiswaById(getIdMahasiswaByNama($namaPenulis)) ?? null,
-                                'status' => $rowData['Status' . $i] ?? null,
-                                'afiliasi' => $rowData['Afiliasi' . $i] ?? null,
-                            ]
-                        );
-                    }
-                }
-
-                if (!empty($rowData['Nama Penulis Lain'])) {
-                    // Split by semicolon or comma
-                    $otherAuthors = explode(';', $rowData['Nama Penulis Lain']);
-                    foreach ($otherAuthors as $authorName) {
-                        $authorName = trim($authorName);
+                for ($i = 1; $i <= 15; $i++) {
+                    // Split by semicolon
+                    $arrayNamaPenulis = explode(';', $rowData['Nama Penulis' . $i] ?? '');
+                    foreach ($arrayNamaPenulis as $namaPenulis) {
+                        $nama = trim($namaPenulis);
                         // Skip jika kosong atau hanya berisi dash/placeholder
-                        if (!empty($authorName) && $authorName !== '-') {
-                            PublikasiPenulis::updateOrCreate([
-                                'id_publikasi' => $dataPublikasi->id,
-                                'nama_penulis' => $authorName,
-                            ], [
-                                'id_mahasiswa' => getIdMahasiswaByNama($authorName),
-                                'id_dosen' => getIdDosenByNama($authorName),
-                                'prodi' => $rowData['Prodi Lain'] ?? getProdiDosenById(getIdDosenByNama($authorName)) ?? getProdiMahasiswaById(getIdMahasiswaByNama($authorName)) ?? null,
-                                'status' => $rowData['Status Lain'] ?? null,
-                                'afiliasi' => $rowData['Afiliasi Lain'] ?? (getIdDosenByNama($authorName) || getIdMahasiswaByNama($authorName) ? 'Telkom University' : null),
-                            ]);
+                        $all = PublikasiPenulis::withTrashed()->where('id_publikasi', $dataPublikasi->id)->get();
+                        $existing = $all[$i - 1] ?? null;
+
+                        if (!empty($nama) && $nama !== '-') {
+                            if ($existing && is_null($existing->deleted_at)) {
+                                // Update existing
+                                $existing->update([
+                                    'id_publikasi' => $dataPublikasi->id,
+                                    'nama_penulis' => $nama,
+                                    'id_mahasiswa' => getIdMahasiswaByNama($nama),
+                                    'id_dosen' => getIdDosenByNama($nama),
+                                    'status' => $rowData['Status' . $i] ?? null,
+                                    'afiliasi' => $rowData['Afiliasi' . $i] ?? null,
+                                ]);
+                            } else {
+                                PublikasiPenulis::create([
+                                        'id_publikasi' => $dataPublikasi->id,
+                                        'nama_penulis' => $nama,
+                                        'id_mahasiswa' => getIdMahasiswaByNama($nama),
+                                        'id_dosen' => getIdDosenByNama($nama),
+                                        'status' => $rowData['Status' . $i] ?? null,
+                                        'afiliasi' => $rowData['Afiliasi' . $i] ?? null,
+                                ]);
+                            }
+                        } else if ($existing && is_null($existing->deleted_at)) {
+                            // Jika input kosong tapi data existing ada, hapus data existing
+                            $existing->delete();
                         }
                     }
                 }

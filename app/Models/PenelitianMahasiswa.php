@@ -16,7 +16,6 @@ class PenelitianMahasiswa extends Model
         'id_penelitian',
         'id_mahasiswa',
         'nama_mhs',
-        'prodi_mhs',
     ];
 
     public function penelitian()

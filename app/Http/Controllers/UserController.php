@@ -81,7 +81,15 @@ class UserController extends Controller
             'id' => 'required|min:4',
             'password' => 'required|min:6',
         ], $messages);
-        // $cek_data = DB::table('users')->where('id', $request->id)->first();
+
+        $id_login = $request->id;
+        $isStaff = DataStaff::where('nip', $id_login)->exists();
+        $isDosen = DataDosen::where('nip', $id_login)->exists();
+
+        if(!$isStaff && !$isDosen){
+            return redirect()->back()->with('alert-danger', 'Login gagal: ID tidak terdaftar sebagai Staff atau Dosen.');
+        }
+
         if (Auth::attempt(['id' => $request->id, 'password' => $request->password])) {
             $request->session()->regenerate();
             MasterTahun::ensureCurrentYear();

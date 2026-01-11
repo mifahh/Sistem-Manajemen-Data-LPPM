@@ -12,7 +12,7 @@ class MasterKategoriKISeeder extends Seeder
         // Seed kategori KI
         $kategori = [
             [
-                'nama_kategori' => 'Hak Cipta Dasar',
+                'nama_kategori' => 'Hak Cipta',
                 'deskripsi' => 'Melindungi karya seni, sastra, musik, film, software, dan karya orisinal lainnya'
             ],
             [

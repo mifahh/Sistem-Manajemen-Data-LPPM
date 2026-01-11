@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('no_sk')->nullable();
             $table->text('link_kontrak')->nullable();
             $table->string('no_kontrak')->nullable();
-            $table->text('judul_penelitian');
+            $table->text('judul_penelitian')->unique();
             $table->string('nama_skema')->nullable();
             $table->integer('tahun_usulan')->nullable();
             $table->string('tahun_pelaksanaan');

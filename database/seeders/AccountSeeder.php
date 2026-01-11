@@ -5,7 +5,7 @@ namespace Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
-
+// do't run this because login now have NIP verification
 class AccountSeeder extends Seeder
 {
     public function run()

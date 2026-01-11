@@ -18,7 +18,6 @@ return new class extends Migration
 
             // Mahasiswa information
             $table->string('nama_mhs')->nullable();
-            $table->string('prodi_mhs')->nullable();
 
             $table->timestamps();
             $table->softDeletes();

@@ -47,18 +47,24 @@ class DataDosenController extends Controller
         ];
 
         $request->validate([
-            'nama_dosen' => 'required|string|unique:data_dosen,nama_dosen',
+            'nama_dosen' => 'required|string',
             'status_aktif' => 'required|in:1,0',
             'prodi' => 'required|string',
-            'nip' => 'required|string|max:10|unique:data_dosen,nip',
-            'nidn' => 'required|string|max:10|unique:data_dosen,nidn',
+            'nip' => 'required|string|max:10',
+            'nidn' => 'required|string|max:10',
             'kode' => 'nullable|string|max:5',
         ], $messages);
 
         DB::beginTransaction();
         try {
-            DataDosen::create([
+            $existing = DataDosen::withTrashed()->where('nama_dosen', $request->nama_dosen)->first();
+            if ($existing && !is_null($existing->deleted_at)) {
+                $existing->restore();
+            }
+
+            DataDosen::updateOrCreate([
                 'nama_dosen' => $request->nama_dosen,
+            ], [
                 'status_aktif' => $request->status_aktif,
                 'prodi' => $request->prodi,
                 'nip' => $request->nip,
@@ -88,7 +94,7 @@ class DataDosenController extends Controller
 
         $request->validate([
             'id' => 'required|exists:data_dosen,id',
-            'nama_dosen' => 'required|string|unique:data_dosen,nama_dosen,' . $request->id,
+            'nama_dosen' => 'required|string',
             'status_aktif' => 'required|in:1,0',
             'prodi' => 'required|string',
             'nip' => 'required|string|max:10|unique:data_dosen,nip,' . $request->id,
@@ -227,6 +233,10 @@ class DataDosenController extends Controller
                 // Check if already exists
                 $existing = DataDosen::withTrashed()->where('nip', $nip)->first();
 
+                if ($existing && !is_null($existing->deleted_at)) {
+                    $existing->restore();
+                }
+
                 if ($existing && is_null($existing->deleted_at)) {
                     // Update existing
                     $existing->update([
@@ -241,10 +251,6 @@ class DataDosenController extends Controller
                     ]);
                 } else {
                     // Create new
-                    if ($existing && !is_null($existing->deleted_at)) {
-                        $existing->restore();
-                    }
-
                     DataDosen::create([
                         'nama_dosen' => $nama_dosen,
                         'status_aktif' => $status_aktif,

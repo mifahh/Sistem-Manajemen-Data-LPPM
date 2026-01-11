@@ -82,8 +82,8 @@
                                         <div class="form-group col-md-3">
                                             <label for="prodi">Program Studi</label>
                                             <select name="prodi" id="prodi" class="form-select" required onchange="this.form.submit()">
-                                                @foreach ($jurusan as $item)
-                                                    <option value="{{ $item->nama_jurusan }}" {{ ($selected_prodi ?? request('prodi')) == $item->nama_jurusan ? 'selected' : '' }}>{{ $item->nama_jurusan }}</option>
+                                                @foreach ($prodi_filter as $item)
+                                                    <option value="{{ $item }}" {{ ($selected_prodi ?? request('prodi')) == $item ? 'selected' : '' }}>{{ $item }}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -170,7 +170,7 @@
             <div class="form-group row">
                 <label for="nama_create" class="col-sm-2 col-form-label d-flex align-items-center">Nama</label>
                 <div class="col-sm-10 d-flex align-items-center">
-                    <input type="text" class="form-control" id="nama_create" name="nama"
+                    <input type="text" class="form-control" id="nama_create" name="nama_mahasiswa"
                         placeholder="Isikan Nama Mahasiswa" required>
                 </div>
             </div>

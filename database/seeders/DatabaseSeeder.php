@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             MasterCoESeeder::class,
             MasterKKSeeder::class,
             MasterKategoriKISeeder::class,
+            MasterStatusKISeeder::class,
             DataDosenSeeder::class,
             DataMahasiswaSeeder::class,
             DataStaffSeeder::class,

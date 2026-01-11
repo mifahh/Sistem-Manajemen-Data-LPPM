@@ -18,34 +18,23 @@ class DataMahasiswaController extends Controller
     public function data_mahasiswa_table(Request $request)
     {
         $query = DataMahasiswa::whereNull('deleted_at');
+
+        $statuses = DataMahasiswa::getStatusList();
+        $tahun_filter = DataMahasiswa::select('angkatan')->distinct()->orderBy('angkatan', 'desc')->pluck('angkatan');
+        $prodi_filter = DataMahasiswa::select('prodi')->distinct()->orderBy('prodi', 'asc')->pluck('prodi');
+
         $selected_status = ($request->has('status') && $request->status != '') ? $request->status : 'STUDENT';
         $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : DataMahasiswa::max('angkatan');
-        $selected_prodi = ($request->has('prodi') && $request->prodi != '') ? $request->prodi : DataMahasiswa::select('prodi')->distinct()->pluck('prodi')->first();
+        $selected_prodi = ($request->has('prodi') && $request->prodi != '') ? $request->prodi : $prodi_filter->first();
         // dd("Filters - Status: {$selected_status}, Tahun: {$selected_tahun}, Prodi: {$selected_prodi}");
 
-        $query->when(
-            $request->filled('status') && $request->status !== '',
-            fn($q) => $q->where('status', $request->status),
-            fn($q) => $q->where('status', 'STUDENT')
-        );
-
-        $query->when(
-            $request->filled('tahun_filter') && $request->tahun_filter !== '',
-            fn($q) => $q->where('angkatan', $request->tahun_filter),
-            fn($q) => $q->where('angkatan', DataMahasiswa::max('angkatan'))
-        );
-
-        $query->when(
-            $request->filled('prodi') && $request->prodi !== '',
-            fn($q) => $q->where('prodi', $request->prodi),
-            fn($q) => $q->where('prodi', DataMahasiswa::select('prodi')->distinct()->pluck('prodi')->first())
-        );
+        $query->where('status', $selected_status);
+        $query->where('angkatan', $selected_tahun);
+        $query->where('prodi', $selected_prodi);
 
         $data_mahasiswa = $query->orderBy('nim', 'asc')->get();
-        $tahun_filter = DataMahasiswa::select('angkatan')->distinct()->orderBy('angkatan', 'desc')->pluck('angkatan');
         $tahun = \App\Models\MasterTahun::all();
         $jurusan = \App\Models\MasterJurusan::all();
-        $statuses = DataMahasiswa::getStatusList();
 
         return view('data_mahasiswa.data_mahasiswa_table', [
             'data_mahasiswa' => $data_mahasiswa,
@@ -54,6 +43,7 @@ class DataMahasiswaController extends Controller
             'selected_tahun' => $selected_tahun,
             'selected_prodi' => $selected_prodi,
             'tahun_filter' => $tahun_filter,
+            'prodi_filter' => $prodi_filter,
             'tahun' => $tahun,
             'jurusan' => $jurusan,
             'statuses' => $statuses,
@@ -70,7 +60,7 @@ class DataMahasiswaController extends Controller
         ];
 
         $request->validate([
-            'nim' => 'required|string|unique:data_mahasiswa,nim',
+            'nim' => 'required|string',
             'nama_mahasiswa' => 'required|string',
             'prodi' => 'required|string',
             'status' => 'required|in:GRADUATED,RESIGN,CHANGE MAJOR,NON-ACTIVE,STUDENT,PASSED AWAY,LEAVE',
@@ -79,6 +69,16 @@ class DataMahasiswaController extends Controller
 
         DB::beginTransaction();
         try {
+            $existing = DataMahasiswa::withTrashed()->where('nama_mahasiswa', $request->nama_mahasiswa)->first();
+            if ($existing && !is_null($existing->deleted_at)) {
+                $existing->restore();
+            }
+
+            $existing->update([
+                'nama_mahasiswa' => $existing->nama_mahasiswa . ' (old)',
+                'nim' => $existing->nim
+            ]);
+
             DataMahasiswa::create([
                 'nim' => $request->nim,
                 'nama_mahasiswa' => $request->nama_mahasiswa,
@@ -233,6 +233,10 @@ class DataMahasiswaController extends Controller
                 // Check if already exists
                 $existing = DataMahasiswa::withTrashed()->where('nim', $nim)->first();
 
+                if ($existing && !is_null($existing->deleted_at)) {
+                    $existing->restore();
+                }
+
                 if ($existing && is_null($existing->deleted_at)) {
                     // Update existing
                     $existing->update([
@@ -244,10 +248,6 @@ class DataMahasiswaController extends Controller
                     ]);
                 } else {
                     // Create new
-                    if ($existing && !is_null($existing->deleted_at)) {
-                        $existing->restore();
-                    }
-
                     DataMahasiswa::create([
                         'nim' => $nim,
                         'nama_mahasiswa' => $nama,

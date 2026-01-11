@@ -19,37 +19,61 @@ class KiController extends Controller
     {
         $query = KI::with('anggota')->whereNull('deleted_at');
         $this->updateIdFromNama();
-        $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : KI::max('application_year');
 
-        $query->when(
-            $request->filled('tahun_filter') && $request->tahun_filter !== '',
-            fn ($q) => $q->where('application_year', $request->tahun_filter),
-            fn ($q) => $q->where('application_year', KI::max('application_year'))
-        );
+        $kategori_filter = KI::select('kategori')->distinct()->orderBy('kategori', 'asc')->pluck('kategori');
+        $status_filter = KI::select('status')->distinct()->orderBy('status', 'asc')->pluck('status');
+
+        $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : KI::max('application_year');
+        $selected_kategori = ($request->has('kategori_filter') && $request->kategori_filter != '') ? $request->kategori_filter : $kategori_filter->first();
+        $selected_status = ($request->has('status_filter') && $request->status_filter != '') ? $request->status_filter : $status_filter->first();
+        // $selected_prodi = ($request->has('prodi_filter') && $request->prodi_filter != '') ? $request->prodi_filter : '';
+
+        // $query->when(
+        //     $request->filled('prodi_filter') && $request->prodi_filter !== '',
+        //     function ($q) use ($request) {
+        //         $q->whereHas('anggota', function ($q2) use ($request) {
+        //             $q2->where(function ($q3) use ($request) {
+        //                 $q3->whereHas('dosen', function ($q4) use ($request) {
+        //                     $q4->where('prodi', $request->prodi_filter);
+        //                 })->orWhereHas('mahasiswa', function ($q5) use ($request) {
+        //                     $q5->where('prodi', $request->prodi_filter);
+        //                 });
+        //             });
+        //         });
+        //     }
+        // );
+
+        $query->where('application_year', $selected_tahun);
+        $query->where('kategori', $selected_kategori);
+        $query->where('status', $selected_status);
 
         $data_ki = $query->get();
-        $tahun_filter = KI::select('application_year')->distinct()->orderBy('application_year', 'desc')->pluck('application_year');
-        $tahun = \App\Models\MasterTahun::all();
+        $tahun = \App\Models\MasterTahun::all()->sortByDesc('tahun');
         $jurusan = \App\Models\MasterJurusan::all();
         $kategori = \App\Models\MasterKategoriKI::all();
+        $status = \App\Models\MasterStatusKI::all();
 
         // Transform data to flattened format for view
-        $transformedData = $data_ki->map(function($item) {
+        $transformedData = $data_ki->map(function ($item) {
             return $item->getCompleteData();
         });
 
         return view('ki.data_ki_table', [
             'ki' => $transformedData,
-            'tahun_filter' => $tahun_filter,
             'selected_tahun' => $selected_tahun,
+            'kategori_filter' => $kategori_filter,
+            'selected_kategori' => $selected_kategori,
+            'status_filter' => $status_filter,
+            'selected_status' => $selected_status,
+            'kategori' => $kategori,
+            'status' => $status,
             'tahun' => $tahun,
             'jurusan' => $jurusan,
-            'kategori' => $kategori,
             'jml_ki' => $data_ki->count()
         ]);
     }
 
-        private function updateIdFromNama()
+    private function updateIdFromNama()
     {
         try {
             $publikasiPenulis = KIAnggota::whereNull('deleted_at')->get();
@@ -85,13 +109,18 @@ class KiController extends Controller
         $request->validate([
             'kategori' => 'required|string',
             'application_year' => 'required|integer',
-            'title' => 'required|string|unique:data_ki,title',
+            'title' => 'required|string',
             'jenis_hki' => 'required|string',
             'status' => 'required|string',
         ], $messages);
 
         DB::beginTransaction();
         try {
+            $existing = KI::withTrashed()->where('title', $request->title)->first();
+            if ($existing && !is_null($existing->deleted_at)) {
+                $existing->restore();
+            }
+
             $dataKi = KI::updateOrCreate([
                 'title' => $request->title,
             ], [
@@ -101,9 +130,10 @@ class KiController extends Controller
                 'jenis_hki' => $request->jenis_hki,
                 'prototype' => $request->prototype,
                 'patent_holder' => $request->patent_holder,
+                'id_dosen' => $this->getIdDosenByNama($request->inventor),
+                'id_mahasiswa' => $this->getIdMahasiswaByNama($request->inventor),
                 'inventor' => $request->inventor,
                 'jabatan' => $request->jabatan,
-                'prodi' => $request->prodi,
                 'publication_number' => $request->publication_number,
                 'publication_link' => $request->publication_link,
                 'publication_date' => $request->publication_date,
@@ -116,16 +146,31 @@ class KiController extends Controller
             ]);
 
             for ($i = 1; $i <= 10; $i++) {
+                $all = KIAnggota::where('id_ki', $dataKi->id)->get();
+                $existing = $all[$i - 1] ?? null;
+
                 if (!empty($request->input("anggota_{$i}"))) {
-                    KIAnggota::updateOrCreate([
-                        'id_ki' => $dataKi->id,
-                        'anggota' => $request->input("anggota_{$i}"),
-                    ], [
-                        'id_dosen' => $this->getIdDosenByNama($request->input("anggota_{$i}")),
-                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input("anggota_{$i}")),
-                        'status_anggota' => $request->input("status_anggota_{$i}"),
-                        'prodi' => $request->input("prodi_{$i}"),
-                    ]);
+                    if ($existing && is_null($existing->deleted_at)) {
+                        // Update existing
+                        $existing->update([
+                            'id_ki' => $dataKi->id,
+                            'anggota' => $request->input("anggota_{$i}"),
+                            'id_dosen' => $this->getIdDosenByNama($request->input("anggota_{$i}")),
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input("anggota_{$i}")),
+                            'status_anggota' => $request->input("status_anggota_{$i}"),
+                        ]);
+                    } else {
+                        KIAnggota::create([
+                            'id_ki' => $dataKi->id,
+                            'anggota' => $request->input("anggota_{$i}"),
+                            'id_dosen' => $this->getIdDosenByNama($request->input("anggota_{$i}")),
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input("anggota_{$i}")),
+                            'status_anggota' => $request->input("status_anggota_{$i}"),
+                        ]);
+                    }
+                } else if ($existing && is_null($existing->deleted_at)) {
+                    // Jika input kosong tapi data existing ada, hapus data existing
+                    $existing->delete();
                 }
             }
 
@@ -161,9 +206,10 @@ class KiController extends Controller
                 'jenis_hki' => $request->jenis_hki,
                 'prototype' => $request->prototype,
                 'patent_holder' => $request->patent_holder,
+                'id_dosen' => $this->getIdDosenByNama($request->inventor),
+                'id_mahasiswa' => $this->getIdMahasiswaByNama($request->inventor),
                 'inventor' => $request->inventor,
                 'jabatan' => $request->jabatan,
-                'prodi' => $request->prodi,
                 'publication_number' => $request->publication_number,
                 'publication_link' => $request->publication_link,
                 'publication_date' => $request->publication_date,
@@ -185,7 +231,6 @@ class KiController extends Controller
                         'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input("anggota_{$i}")),
                         'anggota' => $request->input("anggota_{$i}"),
                         'status_anggota' => $request->input("status_anggota_{$i}"),
-                        'prodi' => $request->input("prodi_{$i}"),
                     ]);
                 }
             }
@@ -231,7 +276,12 @@ class KiController extends Controller
             // Get headers from first row
             $headers = array_shift($rows);
 
-            $expectedHeaders = ['Application Number','Kategori','APPLICATION YEAR','TITLE','Jenis HKI','Prototipe','PATENT HOLDER','INVENTOR','Jabatan','Prodi','PUBLICATION NUMBER','Publication Date','Filling Date','Reception Date','Registration Date','Registration Number','Status','Link'];
+            $expectedHeaders = ['Application Number', 'Kategori', 'APPLICATION YEAR', 'TITLE', 'Jenis HKI', 'Prototipe', 'PATENT HOLDER', 'INVENTOR', 'Jabatan', 'PUBLICATION NUMBER', 'Publication Date', 'Filling Date', 'Reception Date', 'Registration Date', 'Registration Number', 'Status', 'Link'];
+
+            // for ($i = 1; $i <= 12; $i++) {
+            //     $expectedHeaders[] = 'Anggota ' . $i;
+            //     $expectedHeaders[] = 'Status Anggota ' . $i;
+            // }
 
             foreach ($expectedHeaders as $header) {
                 if (!in_array($header, $headers)) {
@@ -244,7 +294,7 @@ class KiController extends Controller
                 if (empty(array_filter($row))) continue; // Skip empty rows
 
                 // Helper function to get hyperlink value if exists
-                $getHyperlink = function($colIndex) use ($hyperlinks, $rowIndex) {
+                $getHyperlink = function ($colIndex) use ($hyperlinks, $rowIndex) {
                     $cellCoordinate = \PhpOffice\PhpSpreadsheet\Cell\Coordinate::stringFromColumnIndex($colIndex + 1) . ($rowIndex + 2); // +2 because: 1 for 0-based index, 1 for header row
 
                     if (isset($hyperlinks[$cellCoordinate])) {
@@ -259,8 +309,10 @@ class KiController extends Controller
                 if (empty($rowData['TITLE'])) {
                     continue; // Skip rows with empty TITLE
                 }
-                if (KI::where('title', $rowData['TITLE'])->exists()) {
-                    continue; // Skip duplicates based on title
+
+                $existing = KI::withTrashed()->where('title', $rowData['TITLE'])->first();
+                if ($existing && !is_null($existing->deleted_at)) {
+                    $existing->restore();
                 }
 
                 // Create main KI data
@@ -273,9 +325,10 @@ class KiController extends Controller
                     'jenis_hki' => $rowData['Jenis HKI'] ?? null,
                     'prototype' => $rowData['Prototipe'] ?? null,
                     'patent_holder' => $rowData['PATENT HOLDER'] ?? null,
+                    'id_mahasiswa' => $this->getIdMahasiswaByNama($rowData['INVENTOR'] ?? null),
+                    'id_dosen' => $this->getIdDosenByNama($rowData['INVENTOR'] ?? null),
                     'inventor' => $rowData['INVENTOR'] ?? null,
                     'jabatan' => $rowData['Jabatan'] ?? null,
-                    'prodi' => $rowData['Prodi'] ?? null,
                     'publication_number' => $rowData['PUBLICATION NUMBER'] ?? null,
                     'publication_link' => $getHyperlink(11),
                     'publication_date' => $rowData['Publication Date'] ?? null,
@@ -289,15 +342,31 @@ class KiController extends Controller
 
                 // Create anggota data
                 for ($i = 1; $i <= 12; $i++) {
+                    $all = KIAnggota::withTrashed()->where('id_ki', $dataKi->id)->get();
+                    $existing = $all[$i - 1] ?? null;
+
                     if (!empty($rowData['Anggota ' . $i] ?? null)) {
-                        KIAnggota::updateOrCreate([
-                            'id_ki' => $dataKi->id,
-                            'anggota' => $rowData['Anggota ' . $i] ?? null,
-                        ], [
-                            'id_mahasiswa' => $this->getIdMahasiswaByNama($rowData['Anggota ' . $i] ?? null),
-                            'id_dosen' => $this->getIdDosenByNama($rowData['Anggota ' . $i] ?? null),
-                            'status_anggota' => $rowData['Status Anggota ' . $i] ?? null,
-                        ]);
+                        if ($existing && is_null($existing->deleted_at)) {
+                            // Update existing
+                            $existing->update([
+                                'id_ki' => $dataKi->id,
+                                'anggota' => $rowData['Anggota ' . $i] ?? null,
+                                'id_mahasiswa' => $this->getIdMahasiswaByNama($rowData['Anggota ' . $i] ?? null),
+                                'id_dosen' => $this->getIdDosenByNama($rowData['Anggota ' . $i] ?? null),
+                                'status_anggota' => $rowData['Status Anggota ' . $i] ?? null,
+                            ]);
+                        } else {
+                            KIAnggota::create([
+                                'id_ki' => $dataKi->id,
+                                'anggota' => $rowData['Anggota ' . $i] ?? null,
+                                'id_mahasiswa' => $this->getIdMahasiswaByNama($rowData['Anggota ' . $i] ?? null),
+                                'id_dosen' => $this->getIdDosenByNama($rowData['Anggota ' . $i] ?? null),
+                                'status_anggota' => $rowData['Status Anggota ' . $i] ?? null,
+                            ]);
+                        }
+                    } else if ($existing && is_null($existing->deleted_at)) {
+                        // Jika input kosong tapi data existing ada, hapus data existing
+                        $existing->delete();
                     }
                 }
             }

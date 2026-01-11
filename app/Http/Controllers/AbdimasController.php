@@ -7,6 +7,10 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use PhpOffice\PhpSpreadsheet\IOFactory;
 use App\Models\Abdimas;
+use App\Models\AbdimasMember;
+use App\Models\AbdimasMahasiswa;
+use App\Models\AbdimasAdditionalField;
+use App\Models\AbdimasLuaran;
 
 class AbdimasController extends Controller
 {
@@ -32,19 +36,13 @@ class AbdimasController extends Controller
 
         $query = Abdimas::with(['members', 'additionalFields', 'mahasiswa', 'luaran'])
             ->whereNull('deleted_at');
+
         $selected_tahun = ($request->has('tahun_filter') && $request->tahun_filter != '') ? $request->tahun_filter : Abdimas::max('tahun_pelaksanaan');
 
-
-        // Add filter only if tahun parameter provided
-        $query->when(
-            $request->filled('tahun_filter') && $request->tahun_filter !== '',
-            fn ($q) => $q->where('tahun_pelaksanaan', $request->tahun_filter),
-            fn ($q) => $q->where('tahun_pelaksanaan', Abdimas::max('tahun_pelaksanaan'))
-        );
+        $query->where('tahun_pelaksanaan', $selected_tahun);
 
         $abdimas = $query->get();
-        $tahun_filter = Abdimas::select('tahun_pelaksanaan')->distinct()->orderBy('tahun_pelaksanaan', 'desc')->pluck('tahun_pelaksanaan');
-        $tahun = \App\Models\MasterTahun::all();
+        $tahun = \App\Models\MasterTahun::all()->sortByDesc('tahun');
         $jurusan = \App\Models\MasterJurusan::all();
         $jml_abdimas = $abdimas->count();
 
@@ -55,7 +53,6 @@ class AbdimasController extends Controller
         return view('abdimas.data_abdimas_table', [
             'abdimas' => $transformedData,
             'jurusan' => $jurusan,
-            'tahun_filter' => $tahun_filter,
             'selected_tahun' => $selected_tahun,
             'tahun' => $tahun,
             'jml_abdimas' => $jml_abdimas
@@ -134,7 +131,7 @@ class AbdimasController extends Controller
         ];
 
         $request->validate([
-            'judul_penelitian' => 'required|string|unique:abdimas_main,judul_penelitian',
+            'judul_penelitian' => 'required|string',
             'nama_skema' => 'required|string',
             'tahun_usulan' => 'required|integer',
             'dana_diusulkan' => 'nullable|integer',
@@ -147,6 +144,10 @@ class AbdimasController extends Controller
 
         DB::beginTransaction();
         try {
+            $existing = Abdimas::withTrashed()->where('judul_penelitian', $request->judul_penelitian)->first();
+            if ($existing && !is_null($existing->deleted_at)) {
+                $existing->restore();
+            }
             // Create main abdimas record
             $abdimas = Abdimas::updateOrCreate([
                 'judul_penelitian' => $request->judul_penelitian,
@@ -175,20 +176,36 @@ class AbdimasController extends Controller
 
             // Create members
             for ($i = 1; $i <= 8; $i++) {
+                $all = AbdimasMember::where('id_abdimas', $abdimas->id)->get();
+                $existing = $all[$i - 1] ?? null;
+
                 if (!empty($request->input('nama_member' . $i))) {
-                    \App\Models\AbdimasMember::updateOrCreate([
-                        'id_abdimas' => $abdimas->id,
-                        'nama_member' => $request->input('nama_member' . $i),
-                    ], [
-                        'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
-                        'dana_member' => $request->input('dana_member' . $i) ?? 0,
-                        'pt' => $request->input('pt' . $i),
-                    ]);
+                    if ($existing && is_null($existing->deleted_at)) {
+                        // Update existing
+                        $existing->update([
+                            'id_abdimas' => $abdimas->id,
+                            'nama_member' => $request->input('nama_member' . $i),
+                            'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
+                            'dana_member' => $request->input('dana_member' . $i) ?? 0,
+                            'pt' => $request->input('pt' . $i),
+                        ]);
+                    } else {
+                        AbdimasMember::create([
+                            'id_abdimas' => $abdimas->id,
+                            'nama_member' => $request->input('nama_member' . $i),
+                            'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
+                            'dana_member' => $request->input('dana_member' . $i) ?? 0,
+                            'pt' => $request->input('pt' . $i),
+                        ]);
+                    }
+                } else if ($existing && is_null($existing->deleted_at)) {
+                    // Jika input kosong tapi data existing ada, hapus data existing
+                    $existing->delete();
                 }
             }
 
             // Create additional fields
-            \App\Models\AbdimasAdditionalField::updateOrCreate([
+            AbdimasAdditionalField::updateOrCreate([
                 'id_abdimas' => $abdimas->id,
             ], [
                 'sdg' => $request->sdg,
@@ -198,19 +215,32 @@ class AbdimasController extends Controller
 
             // Create mahasiswa records
             for ($i = 1; $i <= 8; $i++) {
+                $all = AbdimasMahasiswa::where('id_abdimas', $abdimas->id)->get();
+                $existing = $all[$i - 1] ?? null;
+
                 if (!empty($request->input('nama_mhs' . $i))) {
-                    \App\Models\AbdimasMahasiswa::updateOrCreate([
-                        'id_abdimas' => $abdimas->id,
-                        'nama_mhs' => $request->input('nama_mhs' . $i),
-                    ], [
-                        'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
-                        'prodi_mhs' => $request->input('prodi_mhs' . $i),
-                    ]);
+                    if ($existing && is_null($existing->deleted_at)) {
+                        // Update existing
+                        $existing->update([
+                            'id_abdimas' => $abdimas->id,
+                            'nama_mhs' => $request->input('nama_mhs' . $i),
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
+                        ]);
+                    } else {
+                        AbdimasMahasiswa::create([
+                            'id_abdimas' => $abdimas->id,
+                            'nama_mhs' => $request->input('nama_mhs' . $i),
+                            'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
+                        ]);
+                    }
+                } else if ($existing && is_null($existing->deleted_at)) {
+                    // Jika input kosong tapi data existing ada, hapus data existing
+                    $existing->delete();
                 }
             }
 
             // Create luaran record
-            \App\Models\AbdimasLuaran::updateOrCreate([
+            AbdimasLuaran::updateOrCreate([
                 'id_abdimas' => $abdimas->id,
             ], [
                 'publikasi_ilmiah' => $request->publikasi_ilmiah,
@@ -285,7 +315,7 @@ class AbdimasController extends Controller
             // Recreate members
             for ($i = 1; $i <= 8; $i++) {
                 if (!empty($request->input('nama_member' . $i))) {
-                    \App\Models\AbdimasMember::create([
+                    AbdimasMember::create([
                         'id_abdimas' => $abdimas->id,
                         'id_dosen' => $this->getIdDosenByNama($request->input('nama_member' . $i)),
                         'nama_member' => $request->input('nama_member' . $i),
@@ -296,7 +326,7 @@ class AbdimasController extends Controller
             }
 
             // Recreate additional fields
-            \App\Models\AbdimasAdditionalField::create([
+            AbdimasAdditionalField::create([
                 'id_abdimas' => $abdimas->id,
                 'sdg' => $request->sdg,
                 'proposal' => $request->proposal,
@@ -306,17 +336,16 @@ class AbdimasController extends Controller
             // Recreate mahasiswa records
             for ($i = 1; $i <= 8; $i++) {
                 if (!empty($request->input('nama_mhs' . $i))) {
-                    \App\Models\AbdimasMahasiswa::create([
+                    AbdimasMahasiswa::create([
                         'id_abdimas' => $abdimas->id,
                         'id_mahasiswa' => $this->getIdMahasiswaByNama($request->input('nama_mhs' . $i)),
                         'nama_mhs' => $request->input('nama_mhs' . $i),
-                        'prodi_mhs' => $request->input('prodi_mhs' . $i),
                     ]);
                 }
             }
 
             // Recreate luaran record
-            \App\Models\AbdimasLuaran::create([
+            AbdimasLuaran::create([
                 'id_abdimas' => $abdimas->id,
                 'publikasi_ilmiah' => $request->publikasi_ilmiah,
                 'media_massa' => $request->media_massa,
@@ -370,12 +399,29 @@ class AbdimasController extends Controller
 
             // Expected headers yang wajib ada
             $expectedHeaders = [
+                //Main Abdimas
                 'Judul Penelitian',
                 'No. SK', 'No. Kontrak', 'Nama Skema', 'Tahun Usulan', 'Tahun Pelaksanaan Kegiatan',
                 'Lama Kegiatan (bulan)', 'Bidang Fokus', 'Dana Disetujui', 'Target TKT',
                 'Nama Program Hibah', 'Kategori Sumber Dana', 'Negara Sumber Dana', 'Sumber Dana',
-                'Nama Ketua', 'DANA KETUA', 'PT'
+                'Nama Ketua', 'DANA KETUA', 'PT',
+                //Additional Fields
+                'SDG', 'Proposal', 'Laporan Akhir',
+                //Luaran
+                'Publikasi Ilmiah', 'Media Massa', 'Produk / Jasa',
+                'Capaian Publikasi Ilmiah', 'Capaian Luaran Wajib', 'Luaran Tambahan'
             ];
+
+            // // Members dan Mahasiswa
+            // for ($i = 1; $i <= 8; $i++) {
+            //     $expectedHeaders[] = 'Nama Member' . $i;
+            //     $expectedHeaders[] = 'DANA MEMBER' . $i;
+            //     $expectedHeaders[] = 'PT' . $i;
+            // }
+
+            // for ($i = 1; $i <= 8; $i++) {
+            //     $expectedHeaders[] = 'Nama Mhs' . $i;
+            // }
 
             // Validasi header
             foreach ($expectedHeaders as $header) {
@@ -428,9 +474,9 @@ class AbdimasController extends Controller
                     continue;
                 }
 
-                if (Abdimas::where('judul_penelitian', $judul_penelitian)->exists()) {
-                    Log::warning("Skip row " . ($rowIndex + 2) . ": Judul Penelitian '$judul_penelitian' already exists");
-                    continue;
+                $existing = Abdimas::withTrashed()->where('judul_penelitian', $judul_penelitian)->first();
+                if ($existing && !is_null($existing->deleted_at)) {
+                    $existing->restore();
                 }
 
                 // Try to map all possible column variations
@@ -482,20 +528,37 @@ class AbdimasController extends Controller
                 for ($i = 1; $i <= 8; $i++) {
                     $namaMemIndex = $findColumn(['Nama Member' . $i, 'Member' . $i, 'nama_member' . $i]);
                     $namaMem = $getValue($headers, $row, $namaMemIndex);
+
+                    $all = AbdimasMember::withTrashed()->where('id_abdimas', $abdimas->id)->get();
+                    $existing = $all[$i - 1] ?? null;
+
                     if (!empty($namaMem)) {
-                        \App\Models\AbdimasMember::updateOrCreate([
-                            'id_abdimas' => $abdimas->id,
-                            'nama_member' => $namaMem,
-                        ], [
-                            'id_dosen' => $this->getIdDosenByNama($namaMem),
-                            'dana_member' => parseDana($getValue($headers, $row, $findColumn(['Dana Member' . $i, 'DANA MEMBER' . $i, 'dana_member' . $i]))) ?? 0,
-                            'pt' => $getValue($headers, $row, $findColumn(['PT Member' . $i, 'PT' . $i, 'pt' . $i])),
-                        ]);
+                        if ($existing && is_null($existing->deleted_at)) {
+                            // Update existing
+                            $existing->update([
+                                'id_abdimas' => $abdimas->id,
+                                'nama_member' => $namaMem,
+                                'id_dosen' => $this->getIdDosenByNama($namaMem),
+                                'dana_member' => parseDana($getValue($headers, $row, $findColumn(['Dana Member' . $i, 'DANA MEMBER' . $i, 'dana_member' . $i]))) ?? 0,
+                                'pt' => $getValue($headers, $row, $findColumn(['PT Member' . $i, 'PT' . $i, 'pt' . $i])),
+                            ]);
+                        } else {
+                            AbdimasMember::create([
+                                'id_abdimas' => $abdimas->id,
+                                'nama_member' => $namaMem,
+                                'id_dosen' => $this->getIdDosenByNama($namaMem),
+                                'dana_member' => parseDana($getValue($headers, $row, $findColumn(['Dana Member' . $i, 'DANA MEMBER' . $i, 'dana_member' . $i]))) ?? 0,
+                                'pt' => $getValue($headers, $row, $findColumn(['PT Member' . $i, 'PT' . $i, 'pt' . $i])),
+                            ]);
+                        }
+                    } else if ($existing && is_null($existing->deleted_at)) {
+                        // Jika input kosong tapi data existing ada, hapus data existing
+                        $existing->delete();
                     }
                 }
 
                 // Create additional fields
-                \App\Models\AbdimasAdditionalField::updateOrCreate([
+                AbdimasAdditionalField::updateOrCreate([
                     'id_abdimas' => $abdimas->id,
                 ], [
                     'sdg' => $getValue($headers, $row, $findColumn(['SDG', 'sdg'])),
@@ -507,19 +570,32 @@ class AbdimasController extends Controller
                 for ($i = 1; $i <= 8; $i++) {
                     $namaMhsIndex = $findColumn(['Nama Mhs' . $i, 'Nama Mahasiswa' . $i, 'Mahasiswa' . $i, 'nama_mhs' . $i]);
                     $namaMhs = $getValue($headers, $row, $namaMhsIndex);
+
+                    $all = AbdimasMahasiswa::withTrashed()->where('id_abdimas', $abdimas->id)->get();
+                    $existing = $all[$i - 1] ?? null;
                     if (!empty($namaMhs)) {
-                        \App\Models\AbdimasMahasiswa::updateOrCreate([
-                            'id_abdimas' => $abdimas->id,
-                            'nama_mhs' => $namaMhs,
-                        ], [
-                            'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
-                            'prodi_mhs' => $getValue($headers, $row, $findColumn(['Prodi Mhs' . $i, 'Prodi Mahasiswa' . $i, 'Prodi' . $i, 'prodi_mhs' . $i])),
-                        ]);
+                        if ($existing && is_null($existing->deleted_at)) {
+                            // Update existing
+                            $existing->update([
+                                'id_abdimas' => $abdimas->id,
+                                'nama_mhs' => $namaMhs,
+                                'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
+                            ]);
+                        } else {
+                            AbdimasMahasiswa::create([
+                                'id_abdimas' => $abdimas->id,
+                                'nama_mhs' => $namaMhs,
+                                'id_mahasiswa' => $this->getIdMahasiswaByNama($namaMhs),
+                            ]);
+                        }
+                    } else if ($existing && is_null($existing->deleted_at)) {
+                        // Jika input kosong tapi data existing ada, hapus data existing
+                        $existing->delete();
                     }
                 }
 
                 // Create luaran record
-                \App\Models\AbdimasLuaran::updateOrCreate([
+                AbdimasLuaran::updateOrCreate([
                     'id_abdimas' => $abdimas->id,
                 ], [
                     'publikasi_ilmiah' => $getValue($headers, $row, $findColumn(['Publikasi Ilmiah', 'publikasi_ilmiah'])),

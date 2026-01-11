@@ -69,8 +69,24 @@
                                                 <div class="form-group col-md-2">
                                                     <label for="tahun">Application Year</label>
                                                     <select name="tahun_filter" id="tahun_filter" class="form-select" required onchange="this.form.submit()">
-                                                        @foreach ($tahun_filter as $item)
-                                                            <option value="{{ $item }}" {{ ($selected_tahun ?? request('tahun_filter')) == $item ? 'selected' : '' }}>{{ $item }}</option>
+                                                        @foreach ($tahun as $item)
+                                                            <option value="{{ $item->tahun }}" {{ ($selected_tahun ?? request('tahun_filter')) == $item->tahun ? 'selected' : '' }}>{{ $item->tahun }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-2">
+                                                    <label for="kategori">Kategori</label>
+                                                    <select name="kategori_filter" id="kategori_filter" class="form-select" required onchange="this.form.submit()">
+                                                        @foreach ($kategori_filter as $item)
+                                                            <option value="{{ $item }}" {{ ($selected_kategori ?? request('kategori_filter')) == $item ? 'selected' : '' }}>{{ $item }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="form-group col-md-2">
+                                                    <label for="status">Status</label>
+                                                    <select name="status_filter" id="status_filter" class="form-select" required onchange="this.form.submit()">
+                                                        @foreach ($status_filter as $item)
+                                                            <option value="{{ $item }}" {{ ($selected_status ?? request('status_filter')) == $item ? 'selected' : '' }}>{{ $item }}</option>
                                                         @endforeach
                                                     </select>
                                                 </div>
@@ -91,7 +107,6 @@
                                                 <th class="th-sm">Patent Holder</th>
                                                 <th class="th-sm">Inventor</th>
                                                 <th class="th-sm">Jabatan</th>
-                                                <th class="th-sm">Prodi</th>
                                                 <th class="th-sm">Publication Number</th>
                                                 <th class="th-sm">Publication Date</th>
                                                 <th class="th-sm">Filling Date</th>
@@ -106,7 +121,7 @@
                                                 @endif
                                             </tr>
                                         </x-slot>
-                                        @foreach ($ki as $index => $item)
+                                        @forelse ($ki as $index => $item)
                                             <tr>
                                                 <td>{{ $item['application_number'] ?? '-' }}</td>
                                                 <td>{{ $item['kategori'] ?? '-' }}</td>
@@ -117,9 +132,8 @@
                                                 <td>{{ $item['patent_holder'] ?? '-' }}</td>
                                                 <td>{{ $item['inventor'] ?? '-' }}</td>
                                                 <td>{{ $item['jabatan'] ?? '-' }}</td>
-                                                <td>{{ $item['prodi'] ?? '-' }}</td>
-                                                @if($item['publication_number'] != null && $item['publication_link'] != null && filter_var($item['publication_link'], FILTER_VALIDATE_URL))
-                                                <td><a href="{{ $item['publication_link'] }}" target="_blank" rel="noopener noreferrer">{{ $item['publication_number'] }}</a></td>
+                                                @if(filter_var($item['publication_link'], FILTER_VALIDATE_URL))
+                                                <td><a href="{{ $item['publication_link'] }}" target="_blank" rel="noopener noreferrer">{{ $item['publication_number'] ?? $item['publication_link'] }}</a></td>
                                                 @else
                                                 <td>{{ $item['publication_number'] ?? '-' }}</td>
                                                 @endif
@@ -165,7 +179,11 @@
                                                     </td>
                                                 @endif
                                             </tr>
-                                        @endforeach
+                                        @empty
+                                            <tr>
+                                                <td colspan="18" class="text-center">No data available in table</td>
+                                            </tr>
+                                        @endforelse
                                     </x-table.datatable-wrapper>
                                     <br>
                                 </div>
@@ -251,15 +269,6 @@
                             <option value="eksternal">Eksternal</option>
                         </select>
                     </div>
-                    <label for="prodi_create" class="col-sm-2 col-form-label d-flex align-items-center">Prodi</label>
-                    <div class="col-sm-4 d-flex align-items-center">
-                        <select name="prodi" id="prodi_create" class="form-select" required>
-                            <option value="">Pilih Prodi</option>
-                            @foreach ($jurusan as $jrs)
-                                <option value="{{ $jrs->nama_jurusan }}">{{ $jrs->nama_jurusan }}</option>
-                            @endforeach
-                        </select>
-                    </div>
                 </div>
 
                 <div class="form-group row">
@@ -302,7 +311,12 @@
                     </div>
                     <label for="status_create" class="col-sm-2 col-form-label d-flex align-items-center">Status</label>
                     <div class="col-sm-4 d-flex align-items-center">
-                        <input type="text" class="form-control" id="status_create" name="status" placeholder="Isikan Status">
+                        <select name="status" id="status_create" class="form-select" required>
+                            <option value="">Pilih Status</option>
+                            @foreach ($status as $st)
+                                <option value="{{ $st->nama_status }}">{{ $st->nama_status }}</option>
+                            @endforeach
+                        </select>
                     </div>
                 </div>
 
@@ -334,14 +348,6 @@
                                             <option value="mahasiswa">Mahasiswa</option>
                                             <option value="staff">Staff</option>
                                             <option value="eksternal">Eksternal</option>
-                                        </select>
-                                    </div>
-                                    <div class="form-group">
-                                        <select name="prodi_{{ $i }}" id="prodi_{{ $i }}_create" class="form-select">
-                                            <option value="">Pilih Prodi</option>
-                                            @foreach ($jurusan as $jrs)
-                                                <option value="{{ $jrs->nama_jurusan }}">{{ $jrs->nama_jurusan }}</option>
-                                            @endforeach
                                         </select>
                                     </div>
                                 </fieldset>
@@ -430,29 +436,16 @@
                                 <option value="eksternal" {{ strtolower($item['jabatan']) == 'eksternal' ? 'selected' : '' }}>Eksternal</option>
                             </select>
                         </div>
-                        <label for="prodi_edit" class="col-sm-2 col-form-label d-flex align-items-center">Prodi</label>
-                        <div class="col-sm-4 d-flex align-items-center">
-                            <select name="prodi" id="prodi_edit" class="form-select" required>
-                                @if(empty($item['prodi']))
-                                    <option value="">Pilih Prodi</option>
-                                @else
-                                    <option value="{{ $item['prodi'] }}">{{ $item['prodi'] }}</option>
-                                @endif
-                                @foreach ($jurusan as $jrs)
-                                    <option value="{{ $jrs->nama_jurusan }}" {{ $item['prodi'] == $jrs->nama_jurusan ? 'selected' : '' }}>{{ $jrs->nama_jurusan }}</option>
-                                @endforeach
-                            </select>
-                        </div>
                     </div>
 
                     <div class="form-group row">
-                        <label for="publication_number_edit" class="col-sm-2 col-form-label d-flex align-items-center">Publication Number</label>
-                        <div class="col-sm-5 d-flex align-items-center">
-                            <input type="text" class="form-control" id="publication_number_edit" name="publication_number" value="{{ $item['publication_number'] }}">
-                        </div>
                         <label for="publication_link_edit" class="col-sm-2 col-form-label d-flex align-items-center">Publication Link</label>
-                        <div class="col-sm-3 d-flex align-items-center">
+                        <div class="col-sm-5 d-flex align-items-center">
                             <input type="text" class="form-control" id="publication_link_edit" name="publication_link" value="{{ $item['publication_link'] }}">
+                        </div>
+                        <label for="publication_number_edit" class="col-sm-2 col-form-label d-flex align-items-center">Publication Number</label>
+                        <div class="col-sm-3 d-flex align-items-center">
+                            <input type="text" class="form-control" id="publication_number_edit" name="publication_number" value="{{ $item['publication_number'] }}">
                         </div>
                     </div>
 
@@ -485,7 +478,14 @@
                         </div>
                         <label for="status_edit" class="col-sm-2 col-form-label d-flex align-items-center">Status</label>
                         <div class="col-sm-4 d-flex align-items-center">
-                            <input type="text" class="form-control" id="status_edit" name="status" value="{{ $item['status'] }}">
+                            <select name="status" id="status_edit" class="form-select" required>
+                                @if(empty($item['status']))
+                                    <option value="">Pilih Status</option>
+                                @endif
+                                @foreach ($status as $st)
+                                    <option value="{{ $st->nama_status }}" {{ ($item['status'] == $st->nama_status) ? 'selected' : '' }}>{{ $st->nama_status }}</option>
+                                @endforeach
+                            </select>
                         </div>
                     </div>
 
@@ -521,18 +521,6 @@
                                                 <option value="eksternal" {{ (strtolower($item['status_anggota' . $i]) ?? '') == 'eksternal' ? 'selected' : '' }}>Eksternal</option>
                                             </select>
                                         </div>
-                                        <div class="form-group mb-2">
-                                            <select name="prodi_{{ $i }}" id="prodi_{{ $i }}_edit" class="form-select">
-                                                @if(empty($item['prodi' . $i]))
-                                                    <option value="">Pilih Prodi</option>
-                                                @else
-                                                    <option value="{{ $item['prodi' . $i] }}">{{ $item['prodi' . $i] }}</option>
-                                                @endif
-                                                @foreach ($jurusan as $jrs)
-                                                    <option value="{{ $jrs->nama_jurusan }}" {{ $item['prodi' . $i] == $jrs->nama_jurusan ? 'selected' : '' }}>{{ $jrs->nama_jurusan }}</option>
-                                                @endforeach
-                                            </select>
-                                        </div>
                                     </fieldset>
                                 </div>
                             @endfor
@@ -559,7 +547,6 @@
             6  => ['8%', 'text-wrap'],     // Patent Holder
             7  => ['8%', 'text-wrap'],     // Inventor
             8  => ['6%', 'text-center'],   // Jabatan
-            9  => ['6%', 'text-center'],   // Prodi
             10 => ['7%', 'text-center'],   // Publication Number
             11 => ['6%', 'text-center'],   // Publication Date
             12 => ['6%', 'text-center'],   // Filling Date

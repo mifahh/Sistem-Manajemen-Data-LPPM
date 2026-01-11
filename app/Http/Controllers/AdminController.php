@@ -14,19 +14,21 @@ class AdminController extends Controller
     //dashboard
     public function dashboard()
     {
-        $data_abdimas = \App\Models\Abdimas::All();
-        $jml_abdimas = $data_abdimas->count();
+        $jml_abdimas = \App\Models\Abdimas::where('deleted_at', null)->get()->count();
+        $jml_penelitian = \App\Models\Penelitian::where('deleted_at', null)->get()->count();
+        $jml_publikasi = \App\Models\Publikasi::where('deleted_at', null)->get()->count();
+        $jml_ki = \App\Models\KI::where('deleted_at', null)->get()->count();
 
-        $data_publikasi = \App\Models\Publikasi::All();
-        $jml_publikasi = $data_publikasi->count();
-
-        $data_ki = \App\Models\KI::All();
-        $jml_ki = $data_ki->count();
+        $jml_mhs = \App\Models\DataMahasiswa::where('deleted_at', null)->get()->count();
+        $jml_dosen = \App\Models\DataDosen::where('deleted_at', null)->get()->count();
 
         return view('admin.dashboard', [
             'jml_abdimas' => $jml_abdimas,
+            'jml_penelitian' => $jml_penelitian,
             'jml_publikasi' => $jml_publikasi,
             'jml_ki' => $jml_ki,
+            'jml_mhs' => $jml_mhs,
+            'jml_dosen' => $jml_dosen,
         ]);
     }
 

@@ -16,7 +16,7 @@
                         <div class="icon">
                             <i class="fas fa-search"></i>
                         </div>
-                        <a href="{{route('plt_profil_penelitian')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
+                        <a href="{{route('data_penelitian_table')}}" class="small-box-footer">More info <i class="fas fa-arrow-circle-right"></i></a>
                     </div>
                 </div>
 
@@ -195,10 +195,10 @@
         let text3 = document.getElementById('0103');
         let text4 = document.getElementById('0104');
         const load = () => {
-            animate(text1, 0, {{''}}, 5000 );
-            animate(text2, 0, {{$jml_abdimas}}, 5000);
-            animate(text3, 0, {{$jml_publikasi}}, 5000);
-            animate(text4, 0, {{$jml_ki}}, 5000);
+            animate(text1, 0, {{$jml_penelitian}}, 2000 );
+            animate(text2, 0, {{$jml_abdimas}}, 2000);
+            animate(text3, 0, {{$jml_publikasi}}, 2000);
+            animate(text4, 0, {{$jml_ki}}, 2000);
         }
     </script>
 @endsection
