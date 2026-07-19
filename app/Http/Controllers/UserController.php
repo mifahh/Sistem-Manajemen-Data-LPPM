@@ -37,7 +37,7 @@ class UserController extends Controller
 
         $this->validate($request, [
             'id' => 'required|numeric|unique:users',
-            'email' => 'required|string|min:4|email:dns|unique:users',
+            'email' => 'required|string|min:4|email|unique:users',
             'password' => 'required|string|confirmed|min:6',
             'no_hp' => 'required|numeric|regex:/^08[0-9]{8,12}$/',
         ], $messages);
